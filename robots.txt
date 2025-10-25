@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://summerwxk.github.io/sitemap.xml
