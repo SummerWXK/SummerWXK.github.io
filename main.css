@@ -2693,6 +2693,36 @@ div.paginate-container li:nth-last-child(2) a:after {
     line-height: 1.15
 }
 
+.visitor-map-section {
+    margin: 28px auto 0;
+    padding: 14px;
+    border: 1px solid #e2d8cf;
+    border-radius: 8px;
+    background: #fffdfb;
+    box-shadow: 0 10px 24px rgba(45, 37, 30, 0.05);
+    text-align: center
+}
+
+.visitor-map-title {
+    color: #6f7d86;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    text-transform: uppercase
+}
+
+.visitor-map-widget {
+    display: flex;
+    justify-content: center;
+    min-height: 160px
+}
+
+.visitor-map-widget > * {
+    max-width: 100%
+}
+
 @media screen and (max-width: 800px) {
     .award-card,
     .service-grid {
