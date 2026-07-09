@@ -214,7 +214,7 @@ pre>code {
     justify-content: center; /* This centers the links horizontally */
     align-items: center;      /* Aligns them vertically */
     flex-wrap: wrap;
-    gap: 18px;
+    gap: 0;
     line-height: 56px;
     z-index: 3;
 }
@@ -237,6 +237,14 @@ pre>code {
 
 .site-nav .page-link:not(:first-child) {
     margin-left: 0
+}
+
+.site-nav .page-link + .page-link::before {
+    content: "|";
+    display: inline-block;
+    margin: 0 14px;
+    color: #9b3022;
+    font-weight: 600
 }
 
 @media screen and (max-width: 600px) {
@@ -283,6 +291,10 @@ pre>code {
         font-weight: 400;
         display: block;
         padding: 5px 10px
+    }
+
+    .site-nav .page-link + .page-link::before {
+        content: none
     }
 }
 
