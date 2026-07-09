@@ -1013,6 +1013,10 @@ hr.soft {
     background-color: #000
 }
 
+.xiaohongshu span {
+    background-color: #FF2442
+}
+
 .icon-button i {
     background: none;
     color: white;
@@ -1946,12 +1950,21 @@ div.paginate-container li:nth-last-child(2) a:after {
     font-weight: 700
 }
 
-#publications .pub-note {
+#publications .pub-right > .authors sup {
+    color: #9b3022;
+    font-size: 0.72em;
+    font-weight: 800;
+    line-height: 0;
+    margin-left: 1px
+}
+
+#publications .publication-symbols {
     color: #6f5d54;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    line-height: 1.42;
-    margin: 3px 0 2px
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+    margin: -6px 0 12px
 }
 
 #publications .pub-right > .publish {
