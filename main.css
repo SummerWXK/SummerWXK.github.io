@@ -213,6 +213,8 @@ pre>code {
     display: flex;
     justify-content: center; /* This centers the links horizontally */
     align-items: center;      /* Aligns them vertically */
+    flex-wrap: wrap;
+    gap: 18px;
     line-height: 56px;
     z-index: 3;
 }
@@ -234,7 +236,7 @@ pre>code {
 }
 
 .site-nav .page-link:not(:first-child) {
-    margin-left: 20px
+    margin-left: 0
 }
 
 @media screen and (max-width: 600px) {
@@ -346,6 +348,89 @@ pre>code {
         float: none;
         width: -webkit-calc(100% - (30px / 2));
         width: calc(100% - (30px / 2))
+    }
+}
+
+.site-footer {
+    margin-top: 30px;
+    border-top: 1px solid #e2d8cf;
+    background: #f6f1ec;
+    color: #4a535b
+}
+
+.footer-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1fr);
+    gap: 20px;
+    align-items: center
+}
+
+.footer-name {
+    color: #1f262d;
+    font-size: 16px;
+    font-weight: 800
+}
+
+.footer-identity {
+    color: #66717a;
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 3px 0
+}
+
+.footer-brand a,
+.footer-meta a,
+.footer-links a {
+    color: #2f738f;
+    font-weight: 700
+}
+
+.footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px
+}
+
+.footer-links a {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border: 1px solid #cfe3eb;
+    border-radius: 6px;
+    background: #eaf5f8;
+    font-size: 13px;
+    text-decoration: none
+}
+
+.footer-links a:hover,
+.footer-links a:focus {
+    border-color: #9dc9d8;
+    background: #dff0f5;
+    color: #245c73;
+    text-decoration: none
+}
+
+.footer-meta {
+    color: #66717a;
+    font-size: 12px;
+    line-height: 1.55;
+    text-align: right
+}
+
+@media screen and (max-width: 800px) {
+    .footer-inner {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        text-align: left
+    }
+
+    .footer-links {
+        justify-content: flex-start
+    }
+
+    .footer-meta {
+        text-align: left
     }
 }
 
@@ -824,6 +909,14 @@ pre>code {
     font-weight: 200
 }
 
+.research-identity {
+    margin: 7px 0 6px;
+    color: #9b3022;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.35
+}
+
 #my-email {
     font-size: 16px;
     color: #292929;
@@ -1011,19 +1104,34 @@ hr.soft {
 
 .back-to-top {
     position: fixed;
-    bottom: 2em;
-    right: 0px;
+    bottom: 24px;
+    right: 24px;
+    border: 0;
+    border-radius: 999px;
     text-decoration: none;
-    color: #35DACA;
-    background-color: rgba(235, 235, 235, 0.8);
-    font-size: 16px;
+    color: #fff;
+    background-color: #9b3022;
+    box-shadow: 0 10px 24px rgba(45, 37, 30, 0.18);
+    font-size: 13px;
     font-weight: bold;
-    padding: 1em;
-    display: none
+    padding: 9px 13px;
+    cursor: pointer;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 160ms ease, transform 160ms ease, background 160ms ease
 }
 
-.back-to-top:hover {
-    background-color: rgba(135, 135, 135, 0.5)
+.back-to-top.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0)
+}
+
+.back-to-top:hover,
+.back-to-top:focus {
+    background-color: #6d2118
 }
 
 .social-icon {
@@ -2222,7 +2330,7 @@ div.paginate-container li:nth-last-child(2) a:after {
 }
 
 .about-panels {
-    display: grid;
+    display: grid !important;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 16px;
     margin-top: 18px
@@ -2321,8 +2429,9 @@ div.paginate-container li:nth-last-child(2) a:after {
 }
 
 .education-logo {
-    width: 24px;
-    height: 24px;
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px;
     object-fit: contain;
     flex: 0 0 auto
 }
@@ -2344,6 +2453,253 @@ div.paginate-container li:nth-last-child(2) a:after {
 @media screen and (max-width: 800px) {
     .about-panels {
         grid-template-columns: 1fr
+    }
+}
+
+.blog-module {
+    margin-top: 24px
+}
+
+.blog-lead {
+    color: #555;
+    font-size: 15px;
+    line-height: 1.65;
+    margin: 0 0 18px
+}
+
+.blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin: 8px 0 20px
+}
+
+.blog-card {
+    display: block;
+    color: #222;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 247, 242, 0.92)),
+        #fff;
+    border: 1px solid #e4ddd6;
+    border-left: 4px solid #9b3022;
+    border-radius: 8px;
+    padding: 18px 20px;
+    box-shadow: 0 12px 30px rgba(60, 45, 35, 0.08);
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease
+}
+
+.blog-card:visited {
+    color: #222
+}
+
+.blog-card:hover,
+.blog-card:focus {
+    color: #111;
+    text-decoration: none;
+    transform: translateY(-3px);
+    border-color: #b84b3c;
+    box-shadow: 0 18px 38px rgba(60, 45, 35, 0.13)
+}
+
+.blog-card-title {
+    color: #1f262d;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 9px
+}
+
+.blog-card-meta {
+    color: #9b3022;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 9px
+}
+
+.blog-card-desc {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.62;
+    margin-bottom: 12px
+}
+
+.blog-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px
+}
+
+.blog-card-tags span {
+    color: #5e514a;
+    background: #f6eee9;
+    border: 1px solid #ead8ce;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px
+}
+
+.awards-section,
+.service-section {
+    margin-top: 24px
+}
+
+.award-list {
+    display: grid;
+    gap: 14px
+}
+
+.award-card {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 16px;
+    align-items: stretch;
+    padding: 14px;
+    border: 1px solid #e2d8cf;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fffdfb, #f8f3ef);
+    box-shadow: 0 12px 30px rgba(45, 37, 30, 0.07)
+}
+
+.award-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 128px;
+    border: 1px solid #eadfd6;
+    border-radius: 6px;
+    background: #fff
+}
+
+.award-art img {
+    width: 100%;
+    height: 136px;
+    object-fit: contain;
+    border-radius: 4px
+}
+
+.award-content {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center
+}
+
+.award-meta {
+    color: #9b3022;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px
+}
+
+.award-content h2 {
+    color: #1f262d;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.32;
+    margin-bottom: 6px
+}
+
+.award-content p {
+    color: #4a535b;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 5px
+}
+
+.award-detail {
+    color: #66717a !important;
+    font-size: 13px !important
+}
+
+.award-compact-list {
+    display: grid;
+    gap: 8px
+}
+
+.award-compact {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #e5dcd3;
+    border-radius: 8px;
+    background: #fffdfb;
+    color: #3d454c;
+    font-size: 14px;
+    line-height: 1.45
+}
+
+.award-compact span {
+    color: #2f738f;
+    font-family: "Menlo", "Consolas", monospace;
+    font-size: 12px;
+    font-weight: 700
+}
+
+.service-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px
+}
+
+.service-group {
+    padding: 16px;
+    border: 1px solid #e4ddd6;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fffdfb, #f7f2ed);
+    box-shadow: 0 10px 24px rgba(45, 37, 30, 0.06)
+}
+
+.service-title {
+    color: #242a31;
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 10px
+}
+
+.service-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px
+}
+
+.service-chips span {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border: 1px solid #cfe3eb;
+    border-radius: 6px;
+    background: #eaf5f8;
+    color: #2f738f;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.15
+}
+
+@media screen and (max-width: 800px) {
+    .award-card,
+    .service-grid {
+        grid-template-columns: 1fr
+    }
+
+    .award-art img {
+        max-height: 210px
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .blog-grid {
+        grid-template-columns: 1fr
+    }
+
+    .award-compact {
+        grid-template-columns: 1fr;
+        gap: 3px
     }
 }
 
@@ -2567,89 +2923,3 @@ div.paginate-container li:nth-last-child(2) a:after {
         font-size: 18px
     }
 }
-
-.card-container {
-    display: flex;
-    justify-content: center;
-    gap: 4px 2px;  /* row gap 24px, column gap 32px */
-    flex-wrap: wrap;
-    width: 940px; /* 控制最大宽度，2列布局 */
-    margin: 0 auto;
-  }
-  
-  .github-card {
-    border: 1.5px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 16px;
-    background-color: white;
-    margin-bottom: 2px;
-    width: 430px;
-    font-family: system-ui, sans-serif;
-    font-size: 14px;
-    color: #333;
-  }
-  
-  .github-card a {
-    color: #1a1a1a;
-    text-decoration: none;
-  }
-  
-  .github-card a:hover {
-    color: #2563eb;
-    text-decoration: underline;
-  }
-  
-  .github-card .repo-link {
-    font-weight: 500;
-    font-size: 14px;
-  }
-  
-  .github-card .label {
-    display: inline-block;
-    margin-left: 8px;
-    padding: 2px 8px;
-    border: 1px solid #d1d5db;
-    border-radius: 9999px;
-    font-size: 12px;
-    color: #6b7280;
-  }
-  
-  .github-card .description {
-    margin-top: 8px;
-    font-size: 11px;
-    color: #6b7280;
-  }
-  
-  .github-card .meta {
-    margin-top: 12px;
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    color: #6b7280;
-  }
-  
-  .github-card .dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    background-color: #2563eb;
-    border-radius: 50%;
-    margin-right: 6px;
-  }
-  
-  .github-card .meta a {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 16px;
-    color: #6b7280;
-  }
-  
-  .github-card .meta a:hover {
-    color: #2563eb;
-  }
-  
-  .github-card svg {
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
-  }

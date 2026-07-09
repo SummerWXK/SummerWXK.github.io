@@ -34,133 +34,14 @@
   
 
   <link rel="shortcut icon" href="images/robot.webp">
-  <link rel="stylesheet" href="main.css">
-  <link rel="stylesheet" href="css/custom.css">
+  <link rel="stylesheet" href="main.css?v=20260709">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <link rel="stylesheet" href="css/academicons.css"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-
-
-  <script src="js/jquery-2.1.3.min.js"> </script>
 
   <!--[if lt IE 9]>
 <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/r29/html5.min.js">
 </script>
 <![endif]-->
-
-  <script type="text/javascript">
-    function ShowHide(divId, linkDivId) {
-        if(document.getElementById(divId).style.display == 'none') {
-            document.getElementById(divId).style.display='block';
-            document.getElementById(linkDivId).style.display='none'; // Hide the "read more" link
-        }
-        else {
-            document.getElementById(divId).style.display = 'none';
-        }
-    }
-  </script>
-
-  <style>
-    /* 为所有列表项设置样式 */
-    li.indented {
-        position: relative;
-        padding-left: 90px; /* 这是对齐效果的关键，可以根据实际内容调整这个值 */
-    }
-
-    li.indented::before {
-        content: attr(data-date);
-        position: absolute;
-        left: 0;
-        top: 0;
-        white-space: nowrap;
-    }
-
-    .blog-module {
-        margin-top: 10px;
-    }
-
-    .blog-lead {
-        color: #555;
-        font-size: 0.95em;
-        line-height: 1.65;
-        margin: 0 0 18px;
-    }
-
-    .blog-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 18px;
-        margin: 8px 0 20px;
-    }
-
-    .blog-card {
-        display: block;
-        color: #222;
-        background: #fff;
-        border: 1px solid #e4ddd6;
-        border-left: 4px solid #9b3022;
-        border-radius: 10px;
-        padding: 18px 20px;
-        box-shadow: 0 12px 30px rgba(60, 45, 35, 0.08);
-        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-    }
-
-    .blog-card:visited {
-        color: #222;
-    }
-
-    .blog-card:hover {
-        color: #111;
-        text-decoration: none;
-        transform: translateY(-3px);
-        border-color: #b84b3c;
-        box-shadow: 0 18px 38px rgba(60, 45, 35, 0.13);
-    }
-
-    .blog-card-title {
-        font-size: 1.08em;
-        font-weight: 600;
-        line-height: 1.35;
-        margin-bottom: 9px;
-    }
-
-    .blog-card-meta {
-        color: #9b3022;
-        font-size: 0.78em;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        margin-bottom: 9px;
-    }
-
-    .blog-card-desc {
-        color: #555;
-        font-size: 0.9em;
-        line-height: 1.62;
-        margin-bottom: 12px;
-    }
-
-    .blog-card-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-
-    .blog-card-tags span {
-        color: #5e514a;
-        background: #f6eee9;
-        border: 1px solid #ead8ce;
-        border-radius: 999px;
-        font-size: 0.76em;
-        padding: 3px 8px;
-    }
-
-    @media (max-width: 640px) {
-        .blog-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-  </style>
   
 
   
@@ -187,16 +68,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </a>
 
   <div class="trigger">
-    <a class="page-link" href="#bio"><b>Biography</b></a>
-    <a class="page-link" href="#timeline"><b>Experiences</b></a>
+    <a class="page-link" href="#bio"><b>About</b></a>
     <a class="page-link" href="#news"><b>News</b></a>
     <a class="page-link" href="#publications"><b>Publications</b></a>
-    <a class="page-link" href="#blog"><b>Blog</b></a>
-    <a class="page-link" href="#codebase"><b>GitHub</b></a>
-    <a class="page-link" href="#awards"><b>Honors & Awards</b></a>
-    <a class="page-link" href="#academicservices"><b>Academic Services </b></a>
-    <!--<a class="page-link" href="#otherprojects">Projects</a>-->
-    <!-- Button for Posts -->
+    <a class="page-link" href="#blog"><b>Paper Notes</b></a>
+    <a class="page-link" href="#awards"><b>Honors</b></a>
+    <a class="page-link" href="#academicservices"><b>Service</b></a>
   </div>
 </nav>
   </div>
@@ -213,6 +90,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div id="my-title" class="text-grey">
           Southeast University (SEU) and Shanghai Innovation Institute (SII)
+        </div>
+        <div class="research-identity">
+          Embodied AI · Vision-Language-Action · Haptics
         </div>
         <div id="my-email" class="text-grey-light">
           xinkaiwang [at] sii.edu.cn
@@ -359,22 +239,22 @@ I'm always looking for related collaboration. If you are interested to chat with
         </h3>
         <div class="education-list">
           <div class="education-item">
-            <div class="education-school"><img class="education-logo" src="images/sii.png" alt="">Shanghai Innovation Institute</div>
+            <div class="education-school"><img class="education-logo" src="images/sii.png" alt="" width="24" height="24">Shanghai Innovation Institute</div>
             <div class="education-degree">Ph.D in Robotics, Sep. 2025 - Now</div>
             <div class="education-meta">Supervisor: <a href="https://lixiny.github.io/" target="_blank" rel="noopener noreferrer">Prof. Lixin Yang</a> and <a href="https://www.mvig.org/" target="_blank" rel="noopener noreferrer">Prof. Cewu Lu</a></div>
           </div>
           <div class="education-item">
-            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="">Southeast University</div>
+            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="" width="24" height="24">Southeast University</div>
             <div class="education-degree">Ph.D in Instrument Science and Engineering, Mar. 2025 - Now</div>
             <div class="education-meta">Supervisor: <a href="https://lfzhulf.github.io/" target="_blank" rel="noopener noreferrer">Prof. Lifeng Zhu</a></div>
           </div>
           <div class="education-item">
-            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="">Southeast University</div>
+            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="" width="24" height="24">Southeast University</div>
             <div class="education-degree">M.Sc in Instrument Science and Engineering, Sep. 2023 - Feb. 2025</div>
             <div class="education-meta">Supervisor: <a href="https://lfzhulf.github.io/" target="_blank" rel="noopener noreferrer">Prof. Lifeng Zhu</a></div>
           </div>
           <div class="education-item">
-            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="">Southeast University</div>
+            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="" width="24" height="24">Southeast University</div>
             <div class="education-degree">B.Eng in Measurement and Control Technology and Instrument, Sep. 2019 - Jun. 2023</div>
           </div>
         </div>
@@ -557,7 +437,7 @@ I'm always looking for related collaboration. If you are interested to chat with
   <div class="pub-list">
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/LaMP.png" alt="LaMP ECCV 2026 publication preview">
+        <img class="intro-img frame" src="images/LaMP.png" alt="LaMP ECCV 2026 publication preview" loading="lazy" decoding="async">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -586,7 +466,7 @@ I'm always looking for related collaboration. If you are interested to chat with
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/ICLR2026.png" alt="ICLR 2026 publication preview">
+        <img class="intro-img frame" src="images/ICLR2026.png" alt="ICLR 2026 publication preview" loading="lazy" decoding="async">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -614,7 +494,7 @@ I'm always looking for related collaboration. If you are interested to chat with
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/DeepCognition.png" alt="DeepCognition publication preview">
+        <img class="intro-img frame" src="images/DeepCognition.png" alt="DeepCognition publication preview" loading="lazy" decoding="async">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -642,7 +522,7 @@ I'm always looking for related collaboration. If you are interested to chat with
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/VISTA.png" alt="VISTA publication preview">
+        <img class="intro-img frame" src="images/VISTA.png" alt="VISTA publication preview" loading="lazy" decoding="async">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -670,7 +550,7 @@ I'm always looking for related collaboration. If you are interested to chat with
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/MRUCT.png" alt="MRUCT publication preview">
+        <img class="intro-img frame" src="images/MRUCT.png" alt="MRUCT publication preview" loading="lazy" decoding="async">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -698,7 +578,7 @@ I'm always looking for related collaboration. If you are interested to chat with
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/DipMe.png" alt="DipMe publication preview">
+        <img class="intro-img frame" src="images/DipMe.png" alt="DipMe publication preview" loading="lazy" decoding="async">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -731,14 +611,14 @@ I'm always looking for related collaboration. If you are interested to chat with
 <div id="blog" class="bio blog-module">
   <h1 class="md-heading text-left">
     <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
-    Blog
+    Paper Notes
   </h1>
   <p class="blog-lead">
     Notes on papers I have read and want to share, focusing on the ideas, figures, equations, and implementation details worth revisiting.
   </p>
   <div class="blog-grid">
     <a class="blog-card" href="blogs/lingbot_video_moe_guide.html" target="_blank" rel="noopener noreferrer">
-      <div class="blog-card-meta">Video World Model · MoE · Embodied AI</div>
+      <div class="blog-card-meta">Reading Note · 2026</div>
       <div class="blog-card-title">LingBot-Video：视频生成模型如何变成具身世界模拟器</div>
       <div class="blog-card-desc">
         A deep reading of LingBot-Video, covering single-stream DiT, sparse MoE routing, refiner, data curriculum, post-training, and code-level inference details.
@@ -781,294 +661,111 @@ I'm always looking for related collaboration. If you are interested to chat with
 </script>
 
 
-<script>// GitHub Star and Fork 读取
-  const repos = [
-    { owner: "alibaba-damo-academy", repo: "WorldVLA", starId: "star-count", forkId: "fork-count" },
-    { owner: "GAI4Manipulation", repo: "AwesomeGAIManipulation", starId: "star-count-2", forkId: "fork-count-2" },
-    { owner: "Jun-CEN", repo: "CMDFusion", starId: "star-count-3", forkId: "fork-count-3" },
-    { owner: "Jun-CEN", repo: "SegmentAnyRGBD", starId: "star-count-4", forkId: "fork-count-4" },
-    { owner: "Jun-CEN", repo: "PSL", starId: "star-count-5", forkId: "fork-count-5" },
-    { owner: "Jun-CEN", repo: "Unified-Open-Set-Recognition", starId: "star-count-6", forkId: "fork-count-6" },
-    { owner: "Jun-CEN", repo: "Open-world-3D-semantic-segmentation", starId: "star-count-7", forkId: "fork-count-7" },
-    { owner: "Jun-CEN", repo: "Open-World-Semantic-Segmentation", starId: "star-count-8", forkId: "fork-count-8" },
-    { owner: "Jingkang50", repo: "PSG4D", starId: "star-count-9", forkId: "fork-count-9" },
-    { owner: "youquanl", repo: "Segment-Any-Point-Cloud", starId: "star-count-10", forkId: "fork-count-10" }
-  ];
-
-  async function loadGitHubStats() {
-    for (const { owner, repo, starId, forkId } of repos) {
-      try {
-        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
-        if (!res.ok) throw new Error("GitHub API error");
-        const data = await res.json();
-        document.getElementById(starId).innerText = data.stargazers_count ?? "–";
-        document.getElementById(forkId).innerText = data.forks_count ?? "–";
-      } catch (e) {
-        console.error(`Failed to load stats for ${owner}/${repo}`, e);
-        document.getElementById(starId).innerText = "–";
-        document.getElementById(forkId).innerText = "–";
-      }
-    }
-  }
-
-  loadGitHubStats();
-</script>
-
-
 <div class="wrapper">
-  <div id="codebase" class="bio">
-    <div class="bio-body" style="overflow:hidden;">
+  <div id="awards" class="bio awards-section">
+    <div class="section-header">
       <h1 class="md-heading text-left">
-        <i class="fa fa-tasks" aria-hidden="true"></i>
-        GitHub
-      </h1>  
-      <!-- <div class="card-container">
-
-        <div class="github-card">
-          <div>
-            <a class="repo-link" href="https://github.com/alibaba-damo-academy/WorldVLA" target="_blank">
-              alibaba-damo-academy/<strong>WorldVLA</strong>
-            </a>
-            <span class="label">Project</span>
-          </div>
-          <div class="description">
-            WorldVLA: Towards Autoregressive Action World Model.
-          </div>
-          <div class="meta">
-            <div class="dot"></div>
-            <div>Python</div>
-            <a href="https://github.com/alibaba-damo-academy/WorldVLA/stargazers" target="_blank">
-              <svg fill="currentColor" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-                <path d="M908.1 353.1l-253.9-36.9L540.7 86.1c-3.1-6.3-8.2-11.4-14.5-14.5-15.8-7.8-35-1.3-42.9 
-                14.5L369.8 316.2 115.9 353.1c-7 1-13.4 4.3-18.3 9.3a32.05 32.05 0 0 0 .6 45.3l183.7 
-                179.1-43.4 252.9a31.95 31.95 0 0 0 46.4 33.7L512 754l227.1 
-                119.4c6.2 3.3 13.4 4.4 20.3 3.2 17.4-3 29.1-19.5 
-                26.1-36.9l-43.4-252.9 183.7-179.1c5-4.9 
-                8.3-11.3 9.3-18.3 2.7-17.5-9.5-33.7-27-36.3z"></path>
-              </svg>
-              Star &nbsp;  <span id="star-count">–</span>
-            </a>
-            <a href="https://github.com/alibaba-damo-academy/WorldVLA/network/members" target="_blank">
-              <svg fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 4a2 2 0 1 0-2.47 1.94V7a.48.48 0 0 1-.27.44L8.49 
-                8.88l-2.76-1.4A.49.49 0 0 1 5.46 7V5.94a2 2 0 1 0-1 
-                0V7a1.51 1.51 0 0 0 .82 1.34L8 
-                9.74v1.32a2 2 0 1 0 1 0V9.74l2.7-1.36A1.49 
-                1.49 0 0 0 12.52 7V5.92A2 2 0 0 0 14 
-                4zM4 4a1 1 0 1 1 2 0 1 1 0 0 1-2 
-                0zm5.47 9a1 1 0 1 1-2 0 1 1 0 0 
-                1 2 0zM12 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z">
-                </path>
-              </svg>
-              Fork &nbsp; <span id="fork-count">–</span>
-            </a>
-          </div>
-        </div> -->
-        
-
-        
+        <i class="fa fa-trophy" aria-hidden="true"></i>
+        Honors & Awards
+      </h1>
+      <span class="section-eyebrow">Selected honors</span>
+    </div>
+    <div class="award-list">
+      <article class="award-card">
+        <div class="award-art">
+          <img src="images/tiaozhenbei_0.jpg" alt="Challenge Cup award project preview" loading="lazy" decoding="async">
         </div>
+        <div class="award-content">
+          <div class="award-meta">Dec, 2023 · National Competition</div>
+          <h2>Outstanding Award (Top 5%)</h2>
+          <p>18th "Challenge Cup" National College Student Extracurricular Academic and Technological Works Competition.</p>
+          <p class="award-detail">Project: 力感智能月面轻巧型采样装置</p>
+          <p class="award-detail">Team: Ziyi Zhao, Yibing Yan, <b>Xinkai Wang</b>, Ruotian Chen, Mingyu Li, Yufei Yan, Fengyuan Liu, Yifei Xing.</p>
+        </div>
+      </article>
+
+      <article class="award-card">
+        <div class="award-art">
+          <img src="images/IROS 2025 Challenge.JPG" alt="IROS 2025 challenge award preview" loading="lazy" decoding="async">
+        </div>
+        <div class="award-content">
+          <div class="award-meta">Oct, 2025 · IROS 2025 Challenge</div>
+          <h2>Third Place Award, Track 1: Manipulation</h2>
+          <p>InternUtopia &amp; Real-World Challenge on Multimodal Robot Learning.</p>
+          <p class="award-detail">Team RoboSoul: <b>Xinkai Wang</b>, Chenyi Wang, Fucheng Zhang, Xinyu Zhan, Bokai Lin, Yifu Xu.</p>
+        </div>
+      </article>
+
+      <div class="award-compact-list">
+        <div class="award-compact"><span>Jul, 2024</span>19th Graduate Electronic Design Competition, East China Regional, First Prize.</div>
+        <div class="award-compact"><span>2024-2025</span>National Scholarship for Postgraduate Students.</div>
+        <div class="award-compact"><span>2024-2025</span>Outstanding Student Scholarship (Grade 1), SEU.</div>
+        <div class="award-compact"><span>2023-2024</span>Outstanding Student Scholarship (Grade 1), SEU.</div>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="wrapper">
-  <div id="awards" class="bio">
-    <h1 class="md-heading text-left">
-      <i class="fa fa-tasks" aria-hidden="true"></i>
-      Selected Honors & Awards
-    </h1>
-    <ul>
-  	  <li> 
-        <div class="pub" data-selected="true">
-          <div class="pub-left">
-            <img class="intro-img frame" src="images/tiaozhenbei_0.png">
-          </div>
-          <div class="pub-right">
-            <div class="title">
-              18th "Challenge Cup" National College Student Extracurricular Academic and Technological Works Competition Outstanding award (Top 5%) 🏆
-            </div>
-            <div class="authors">
-              <font style="font-size: 11pt;">
-                Ziyi Zhao, Yibing Yan, <b>Xinkai Wang</b>, Ruotian Chen, Mingyu Li, Yufei Yan, Fengyuan Liu, Yifei Xing, supervised by <a href="https://lfzhulf.github.io/" target="_blank">Prof. Lifeng Zhu</a> and <a href="https://scholar.google.com/citations?user=RjQ5TrEAAAAJ&hl=en" target="_blank">Prof. Aiguo Song</a>.
-              </font>
-            </div>
-            <div class="authors">
-              <font style="font-size: 11pt;">
-                Project: 力感智能月面轻巧型采样装置, Dec, 2023
-              </font>
-            </div>
-          </div>
-        </div>
-      </li>
-  	  <li> 
-        <div class="pub" data-selected="true">
-          <div class="pub-left">
-            <img class="intro-img frame" src="images/IROS 2025 Challenge.JPG">
-          </div>
-          <div class="pub-right">
-            <div class="title">
-              Challenge of MultimodalRobot learning innternUtopia and Real world Track1: Manipulation Third Place Award 🥉
-            </div>
-            <div class="authors">
-              <font style="font-size: 11pt;">
-                <b>Xinkai Wang</b>, Chenyi Wang, Fucheng Zhang, Xinyu Zhan, Bokai Lin, Yifu Xu, supervised by <a href="https://lixiny.github.io/" target="_blank">Prof. Lixin Yang</a>.
-              </font>
-            </div>
-            <div class="authors">
-              <font style="font-size: 11pt;">
-                Team: RoboSoul, IROS 2025 Chanllenge, Oct, 2025
-              </font>
-            </div>
-          </div>
-        </div>
-      </li>
-      <li> 19th Graduate Electronic Design Competition, East China Regional, First Prize, Jul, 2024.</li>
-	    <li> National Scholarship for Postgraduate Students, 2024-2025.</li>
-	    <li> Outstanding Student Scholarship (Grade 1), SEU, 2024-2025.</li>
-	    <li> Outstanding Student Scholarship (Grade 1), SEU, 2023-2024.</li>
-    </ul>
-  </div>
-</div>
-
-<style>
-  .reviewer-section {
-    display: flex;
-    flex-wrap: wrap;
-    margin-top: 8px;
-  }
-
-  .reviewer-column {
-    flex: 1 1 50%;
-    box-sizing: border-box;
-    padding-right: 20px;
-    font-size: 0.85em; /* 字体略微变小 */
-    line-height: 1.6;
-    position: relative;
-    padding-left: 1em;
-    margin-bottom: 4px;
-  }
-
-  .reviewer-column::before {
-    content: "•";
-    position: absolute;
-    left: 0;
-    color: #555;
-  }
-
-  @media (max-width: 600px) {
-    .reviewer-column {
-      flex: 1 1 100%;
-    }
-  }
-
-  .reviewer-title {
-    margin-top: 12px;
-    font-weight: bold;
-  }
-</style>
-
-<div class="wrapper">
-  <div id="academicservices" class="bio">
-    <div class="bio-body" style="overflow:hidden;">
+  <div id="academicservices" class="bio service-section">
+    <div class="section-header">
       <h1 class="md-heading text-left">
-        <i class="fa fa-tasks" aria-hidden="true"></i>
+        <i class="fa fa-handshake-o" aria-hidden="true"></i>
         Academic Services
-      </h1>  
-
-      <div class="reviewer-title">Conference Reviewer:</div>
-      <div class="reviewer-section">
-        <!-- <div class="reviewer-column">Conference on Computer Vision and Pattern Recognition (CVPR)</div>
-        <div class="reviewer-column">International Conference on Computer Vision (ICCV)</div>
-        <div class="reviewer-column">European Conference on Computer Vision (ECCV)</div>
-        <div class="reviewer-column">Conference on Neural Information Processing Systems (NeurIPS)</div>
-        <div class="reviewer-column">International Conference on Learning Representations (ICLR)</div>
-        <div class="reviewer-column">International Conference on Machine Learning (ICML)</div> -->
-        <div class="reviewer-column">International Conference on Robotics and Automation (ICRA)</div>
-        <div class="reviewer-column">International Conference on Virtual Reality and 3D User Interfaces (IEEE VR)</div>        
-        <div class="reviewer-column">The ACM Conference on Human Factors in Computing Systems (CHI)</div>
-        <!-- <div class="reviewer-column">International Conference on Intelligent Robots and Systems (IROS)</div> -->
+      </h1>
+      <span class="section-eyebrow">Reviewing</span>
+    </div>
+    <div class="service-grid">
+      <div class="service-group">
+        <div class="service-title">Conference Reviewer</div>
+        <div class="service-chips">
+          <span>ICRA</span>
+          <span>IEEE VR</span>
+          <span>CHI</span>
+        </div>
       </div>
-
-      <div class="reviewer-title">Journal Reviewer:</div>
-      <div class="reviewer-section">
-        <!-- <div class="reviewer-column">International Journal of Computer Vision (IJCV)</div>
-        <div class="reviewer-column">Transactions on Pattern Analysis and Machine Intelligence (TPAMI)</div>
-        <div class="reviewer-column">Transactions on Neural Networks and Learning Systems (TNNLS)</div>
-        <div class="reviewer-column">Transactions on Circuits and Systems for Video Technology (TCSVT)</div>
-        <div class="reviewer-column">Transactions on Multimedia (TMM)</div> -->
-        <div class="reviewer-column">Robotics and Automation Letters (RA-L)</div>
+      <div class="service-group">
+        <div class="service-title">Journal Reviewer</div>
+        <div class="service-chips">
+          <span>RA-L</span>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-
-
-
-
-<div style="display: flex; justify-content: center; align-items: center;">
-  <div style="max-width: 400px; width: 100%;">
-    <script type="text/javascript" id="mapmyvisitors" src="//mapmyvisitors.com/map.js?d=8EaDWYvWxhC8ao_2kxQYgcaxT3KuYmLR3SAGmGeS5lQ&cl=ffffff&w=a"></script>
   </div>
 </div>
 
 
 <footer class="site-footer">
   <div class="wrapper">
-    <div class="footer-col-wrapper">
-      <div class="footer-col  footer-col-1">
-        <ul class="contact-list">
-          <li>Personal Email:</li>
-          <li><a href="mailto:">xinkaiwang [at] sii.edu.cn</a></li>
-        </ul>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-name">Xinkai WANG</div>
+        <div class="footer-identity">Embodied AI · Vision-Language-Action · Haptics</div>
+        <a href="mailto:xinkaiwang@sii.edu.cn">xinkaiwang [at] sii.edu.cn</a>
       </div>
-
-      <div class="footer-col  footer-col-2">
-          <a href="https://scholar.google.com/citations?user=SdTlC6QAAAAJ&hl=en" target="_blank" rel="noopener noreferrer" aria-label="Google Scholar" class="icon-button linkedin">
-          <i class="ai ai-google-scholar-square icon-linkedin"></i>
-            <span aria-hidden="true"></span>
-          </a>
-
-          <a href="https://github.com/SummerWXK" target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="icon-button github">
-            <i class="fa fa-github icon-github"></i>
-            <span aria-hidden="true"></span>
-          </a>
-
-          <a href="https://www.xiaohongshu.com/user/profile/621fdf330000000021023e39" target="_blank" rel="noopener noreferrer" aria-label="Xiaohongshu" class="icon-button xiaohongshu">
-            <i class="fa fa-book icon-xiaohongshu"></i>
-            <span aria-hidden="true"></span>
-          </a>
+      <div class="footer-links" aria-label="Footer links">
+        <a href="https://scholar.google.com/citations?user=SdTlC6QAAAAJ&hl=en" target="_blank" rel="noopener noreferrer">Google Scholar</a>
+        <a href="https://github.com/SummerWXK" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://www.xiaohongshu.com/user/profile/621fdf330000000021023e39" target="_blank" rel="noopener noreferrer">Xiaohongshu</a>
       </div>
-	<div class="footer-col footer-col-3">
-    	<!--<a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fwillhua127.github.io&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/></a> -->
-	<!-- <a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?user=Lxe71v4AAAAJ&hl=en&url=https%3A%2F%2Fscholar.google.com%2Fcitations&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/></a> -->
-		<p class="text">Last updated: Oct, 2025.<br>The style of this website is borrowed from <a href='https://cen-jun.com/' target="_blank">Jun CEN's</a>.</p>
-	</div>
+      <div class="footer-meta">
+        Last updated: Jul, 2026.<br>
+        Website style adapted from <a href="https://cen-jun.com/" target="_blank" rel="noopener noreferrer">Jun CEN</a>.
+      </div>
+    </div>
   </div>
-  </div>
-
 </footer>
-    <div class="back-to-top">Top</div>
+<button class="back-to-top" type="button" aria-label="Back to top">Top</button>
 
 
-<script type="text/javascript">
-jQuery(document).ready(function() {
-    var offset = 220;
-    var duration = 500;
-    jQuery(window).scroll(function() {
-        if (jQuery(this).scrollTop() > offset) {
-            jQuery('.back-to-top').fadeIn(duration);
-        } else {
-            jQuery('.back-to-top').fadeOut(duration);
-    
-        }
-    });
-    jQuery('.back-to-top').click(function(event) {
-        event.preventDefault();
-        jQuery('html, body').animate({scrollTop: 0}, duration);
-        return false;
-    })
-});
+<script>
+  const backToTop = document.querySelector('.back-to-top');
+  window.addEventListener('scroll', function() {
+    backToTop.classList.toggle('is-visible', window.scrollY > 220);
+  });
+  backToTop.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 </script>
   </body>
 
