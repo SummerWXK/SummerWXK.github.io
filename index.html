@@ -205,7 +205,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="profile-cover" class="cover shallow-bg img-responsive"> 
     <div id="profile-namecard" class="profile-wrapper wrapper-light">
       <div id="my-pic" class="profile-col profile-col-1">
-        <img id="profile-avatar" src="images/myself.jpg" alt="Me" class="circle-img border-dark"-/>
+        <img id="profile-avatar" src="images/myself.jpg" alt="Me" class="circle-img border-dark"/>
       </div>
       <div id="my-contact" class="profile-col profile-col-2">
         <div id="my-name" class="text-grey-dark">
@@ -220,14 +220,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 	</div>
         <div class="social-media">
-          <a href="https://scholar.google.com/citations?user=SdTlC6QAAAAJ&hl=en" target="_blank" class="icon-button linkedin">
+          <a href="https://scholar.google.com/citations?user=SdTlC6QAAAAJ&hl=en" target="_blank" rel="noopener noreferrer" aria-label="Google Scholar" class="icon-button linkedin">
           <i class="ai ai-google-scholar-square icon-linkedin"></i>
-            <span></span>
+            <span aria-hidden="true"></span>
           </a>
 
-          <a href="https://github.com/SummerWXK" target="_blank" class="icon-button github">
+          <a href="https://github.com/SummerWXK" target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="icon-button github">
             <i class="fa fa-github icon-github"></i>
-            <span></span>
+            <span aria-hidden="true"></span>
           </a>
 
           <!-- <a href="https://www.linkedin.com/in/jun-cen-45b995219/" target="_blank" class="icon-button linkedin">
@@ -235,19 +235,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <span></span>
           </a> -->
 
-          <a href="https://www.xiaohongshu.com/user/profile/621fdf330000000021023e39" target="_blank" class="icon-button xiaohongshu">
+          <a href="https://www.xiaohongshu.com/user/profile/621fdf330000000021023e39" target="_blank" rel="noopener noreferrer" aria-label="Xiaohongshu" class="icon-button xiaohongshu">
             <i class="fa fa-book icon-xiaohongshu"></i>
-            <span></span>
+            <span aria-hidden="true"></span>
           </a>
 
-          <a href="" target="_blank" class="icon-button github">
-            <i class="ai ai-cv icon-github"></i>
-            <span></span>
-          </a>
-
-          <a href="mailto:xinkaiwang@sii.edu.cn" target="_blank" class="icon-button linkedin">
+          <a href="mailto:xinkaiwang@sii.edu.cn" aria-label="Email" class="icon-button linkedin">
             <i class="fa fa-envelope icon-linkedin"></i>
-            <span></span>
+            <span aria-hidden="true"></span>
           </a>
         </div>
       </div>
@@ -311,57 +306,79 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <i class="fa fa-id-card" aria-hidden="true"></i>
     About
   </h1>
-  <div class="bio-body" style="overflow:hidden;">
+  <div class="bio-body about-body">
     <p>
       I am currently a first-year PhD student in the <a href="https://digimed.seu.edu.cn/" target="_blank">State Key Laboratory of Digital Medical Engineering</a>, <a href="https://www.seu.edu.cn/" target="_blank">Southeast University</a>, supervised by <a href="https://lfzhulf.github.io/" target="_blank">Prof. Lifeng Zhu</a>, and I am also involved in joint training at the <a href="https://www.sii.edu.cn/" target="_blank">Shanghai Innovation Institute (SII)</a> under the co-supervision of <a href="https://lixiny.github.io/" target="_blank">Prof. Lixin Yang</a> and <a href="https://www.mvig.org/" target="_blank">Prof. Cewu Lu</a>.
 I got my B.Eng at the <a href="https://ins.seu.edu.cn/" target="_blank">School of Instrument Science and Engineering</a>, <a href="https://www.seu.edu.cn/" target="_blank">Southeast University</a> in 2023.
 My research interests include Embodied AI & Robot Learning, Multimodal Understanding & Generation, Human-AI Interaction & Haptics, and Medical XR & Robotics. 
-I'm always looking for related colaboration. If you are interested to chat with me, feel free to drop me an <a href="mailto:xinkaiwang@seu.edu.cn" target="_blank">email</a>.
+I'm always looking for related collaboration. If you are interested to chat with me, feel free to drop me an <a href="mailto:xinkaiwang@seu.edu.cn">email</a>.
 
       <br>
     </p>
 
-    <div style="width: 50%; float:left">
-			<h3>
-		    <i class="fa fa-star" aria-hidden="true"></i>
-		    <strong>Interests</strong>
-			</h3>
-      <ul>
-        <li><b>Embodied AI & Robot Learning</b></li>
-        <a href="https://summerwxk.github.io/lamp-project-page/" target="_blank" rel="noopener noreferrer">[LaMP]</a>
-        <li><b>Multimodal Understanding & Generation</b></li>
-        <a href="https://sqwu.top/AD-Loop/" target="_blank" rel="noopener noreferrer">[AD-Loop]</a>
-        <li><b>Human-AI Interaction & Haptics</b></li>
-        <a href="https://arxiv.org/abs/2507.15759" target="_blank" rel="noopener noreferrer">[Deep Cognition]</a><a href="https://arxiv.org/abs/2411.08641" target="_blank" rel="noopener noreferrer">[DipMe]</a>
-        <li><b>Medical XR & Robot-Assisted Intervention</b></li>
-        <a href="https://ieeexplore.ieee.org/document/10937474" target="_blank" rel="noopener noreferrer">[MRUCT]</a><a href="https://arxiv.org/abs/2508.18481" target="_blank" rel="noopener noreferrer">[VISTA]</a>
-      </ul>
-    </div>
+    <div class="about-panels">
+      <section class="about-panel">
+        <h3>
+          <i class="fa fa-star" aria-hidden="true"></i>
+          <strong>Interests</strong>
+        </h3>
+        <div class="interest-list">
+          <div class="interest-item">
+            <div class="interest-title">Embodied AI & Robot Learning</div>
+            <div class="interest-links">
+              <a class="interest-chip" href="https://summerwxk.github.io/lamp-project-page/" target="_blank" rel="noopener noreferrer">LaMP</a>
+            </div>
+          </div>
+          <div class="interest-item">
+            <div class="interest-title">Multimodal Understanding & Generation</div>
+            <div class="interest-links">
+              <a class="interest-chip" href="https://sqwu.top/AD-Loop/" target="_blank" rel="noopener noreferrer">AD-Loop</a>
+            </div>
+          </div>
+          <div class="interest-item">
+            <div class="interest-title">Human-AI Interaction & Haptics</div>
+            <div class="interest-links">
+              <a class="interest-chip" href="https://arxiv.org/abs/2507.15759" target="_blank" rel="noopener noreferrer">Deep Cognition</a>
+              <a class="interest-chip" href="https://arxiv.org/abs/2411.08641" target="_blank" rel="noopener noreferrer">DipMe</a>
+            </div>
+          </div>
+          <div class="interest-item">
+            <div class="interest-title">Medical XR & Robot-Assisted Intervention</div>
+            <div class="interest-links">
+              <a class="interest-chip" href="https://ieeexplore.ieee.org/document/10937474" target="_blank" rel="noopener noreferrer">MRUCT</a>
+              <a class="interest-chip" href="https://arxiv.org/abs/2508.18481" target="_blank" rel="noopener noreferrer">VISTA</a>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <div style="width: 50%; float:right">
-			<h3>
-				<i class="fa fa-graduation-cap" aria-hidden="true"></i>
-				<strong>Education</strong>
-			</h3>
-			<b><img class="social-icon" src="images/sii.png" style="width:25px; height:25px; vertical-align:middle; position:relative; top:-2px;"/>&#8201 Shanghai Innovation Institute</b><br>
-			<ul>
-        <li>Ph.D in Robotics, Sep. 2025 - Now</li>
-        <li>Supervisor: <a href="https://lixiny.github.io/" target="_blank">Prof. Lixin Yang</a> and <a href="https://www.mvig.org/" target="_blank">Prof. Cewu Lu</a> </li>
-      </ul>
-			<b><img class="social-icon" src="images/seu.png" style="width:25px; height:25px; vertical-align:middle; position:relative; top:-2px;"/>&#8201 Southeast University</b><br>
-			<ul>
-        <li>Ph.D in Instrument Science and Engineering, Mar. 2025 - Now</li>
-        <li>Supervisor: <a href="https://lfzhulf.github.io/" target="_blank">Prof. Lifeng Zhu</a> </li>
-      </ul>
-      <b><img class="social-icon" src="images/seu.png" style="width:25px; height:25px; vertical-align:middle; position:relative; top:-2px;"/>&#8201 Southeast University</b><br>
-        <ul>
-          <li>M.Sc in Instrument Science and Engineering, Sep. 2023 - Feb. 2025</li>
-          <li>Supervisor: <a href="https://lfzhulf.github.io/" target="_blank">Prof. Lifeng Zhu</a> </li>
-        </ul>
-      <b><img class="social-icon" src="images/seu.png" style="width:25px; height:25px; vertical-align:middle; position:relative; top:-2px;"/>&#8201 Southeast University</b><br>
-      <ul>
-        <li>B.Eng in Measurement and Control Technology and Instrument, Sep. 2019 - Jun. 2023</li>
-      </ul>
+      <section class="about-panel education-panel">
+        <h3>
+          <i class="fa fa-graduation-cap" aria-hidden="true"></i>
+          <strong>Education</strong>
+        </h3>
+        <div class="education-list">
+          <div class="education-item">
+            <div class="education-school"><img class="education-logo" src="images/sii.png" alt="">Shanghai Innovation Institute</div>
+            <div class="education-degree">Ph.D in Robotics, Sep. 2025 - Now</div>
+            <div class="education-meta">Supervisor: <a href="https://lixiny.github.io/" target="_blank" rel="noopener noreferrer">Prof. Lixin Yang</a> and <a href="https://www.mvig.org/" target="_blank" rel="noopener noreferrer">Prof. Cewu Lu</a></div>
+          </div>
+          <div class="education-item">
+            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="">Southeast University</div>
+            <div class="education-degree">Ph.D in Instrument Science and Engineering, Mar. 2025 - Now</div>
+            <div class="education-meta">Supervisor: <a href="https://lfzhulf.github.io/" target="_blank" rel="noopener noreferrer">Prof. Lifeng Zhu</a></div>
+          </div>
+          <div class="education-item">
+            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="">Southeast University</div>
+            <div class="education-degree">M.Sc in Instrument Science and Engineering, Sep. 2023 - Feb. 2025</div>
+            <div class="education-meta">Supervisor: <a href="https://lfzhulf.github.io/" target="_blank" rel="noopener noreferrer">Prof. Lifeng Zhu</a></div>
+          </div>
+          <div class="education-item">
+            <div class="education-school"><img class="education-logo" src="images/seu.png" alt="">Southeast University</div>
+            <div class="education-degree">B.Eng in Measurement and Control Technology and Instrument, Sep. 2019 - Jun. 2023</div>
+          </div>
+        </div>
+      </section>
     </div>
   
   </div>
@@ -642,7 +659,8 @@ I'm always looking for related colaboration. If you are interested to chat with 
           </font>
         </div>
         <div class="publish">
-          <span class="place">ISMAR 2025, Best Poster Award</span>
+          <span class="place">ISMAR 2025</span>
+          <span class="award">Best Poster Award</span>
         </div>
         <div class="tags">
           <a class="tag" href="https://arxiv.org/abs/2508.18481" target="_blank" rel="noopener noreferrer">Paper</a>
@@ -669,7 +687,8 @@ I'm always looking for related colaboration. If you are interested to chat with 
           </font>
         </div>
         <div class="publish">
-          <span class="place">IEEE VR 2025 Oral</span>
+          <span class="place">IEEE VR 2025</span>
+          <span class="spotlight">Oral</span>
         </div>
         <div class="tags">
           <a class="tag" href="https://ieeexplore.ieee.org/document/10937474" target="_blank" rel="noopener noreferrer">Paper</a>
@@ -715,19 +734,19 @@ I'm always looking for related colaboration. If you are interested to chat with 
     Blog
   </h1>
   <p class="blog-lead">
-    Selected paper-reading notes and long-form technical explainers. I keep this section for papers whose ideas, figures, and code are worth revisiting.
+    Notes on papers I have read and want to share, focusing on the ideas, figures, equations, and implementation details worth revisiting.
   </p>
   <div class="blog-grid">
-    <a class="blog-card" href="blogs/lingbot_video_moe_guide.html" target="_blank">
+    <a class="blog-card" href="blogs/lingbot_video_moe_guide.html" target="_blank" rel="noopener noreferrer">
       <div class="blog-card-meta">Video World Model · MoE · Embodied AI</div>
       <div class="blog-card-title">LingBot-Video：视频生成模型如何变成具身世界模拟器</div>
       <div class="blog-card-desc">
         A deep reading of LingBot-Video, covering single-stream DiT, sparse MoE routing, refiner, data curriculum, post-training, and code-level inference details.
       </div>
       <div class="blog-card-tags">
-        <span>Paper Guide</span>
-        <span>Mixture-of-Experts</span>
-        <span>Action-to-Video</span>
+        <span>Video World Model</span>
+        <span>Sparse MoE</span>
+        <span>Embodied Simulation</span>
       </div>
     </a>
   </div>
@@ -1005,24 +1024,19 @@ I'm always looking for related colaboration. If you are interested to chat with 
       </div>
 
       <div class="footer-col  footer-col-2">
-          <a href="https://scholar.google.com/citations?user=SdTlC6QAAAAJ&hl=en" target="_blank" class="icon-button linkedin">
+          <a href="https://scholar.google.com/citations?user=SdTlC6QAAAAJ&hl=en" target="_blank" rel="noopener noreferrer" aria-label="Google Scholar" class="icon-button linkedin">
           <i class="ai ai-google-scholar-square icon-linkedin"></i>
-            <span></span>
+            <span aria-hidden="true"></span>
           </a>
 
-          <a href="https://github.com/SummerWXK" target="_blank" class="icon-button github">
+          <a href="https://github.com/SummerWXK" target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="icon-button github">
             <i class="fa fa-github icon-github"></i>
-            <span></span>
+            <span aria-hidden="true"></span>
           </a>
 
-          <a href="https://www.xiaohongshu.com/user/profile/621fdf330000000021023e39" target="_blank" class="icon-button xiaohongshu">
+          <a href="https://www.xiaohongshu.com/user/profile/621fdf330000000021023e39" target="_blank" rel="noopener noreferrer" aria-label="Xiaohongshu" class="icon-button xiaohongshu">
             <i class="fa fa-book icon-xiaohongshu"></i>
-            <span></span>
-          </a>
-         
-          <a href="" target="_blank" class="icon-button github">
-            <i class="ai ai-cv icon-github"></i>
-            <span></span>
+            <span aria-hidden="true"></span>
           </a>
       </div>
 	<div class="footer-col footer-col-3">
