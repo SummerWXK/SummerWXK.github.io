@@ -489,34 +489,54 @@ I'm always looking for related colaboration. If you are interested to chat with 
   </div>
   </div>
 
-<div id="news" class="bio">
-  <h1 class="md-heading text-left">
-    <i class="fa fa-tasks" aria-hidden="true"></i>
-    News
-  </h1>  
-  <ul>
-      <li class="indented" data-date="[Feb, 2026]"> 🎉 One paper accepted to the 14th International Conference on Learning Representations.</li>
-    	<li class="indented" data-date="[Oct, 2025]"> 🏆 As Team Leader, won 3rd Place in the IROS 2025 InternUtopia & Real-World Challenge, Track 1 (Manipulation).</li>
-    	<li class="indented" data-date="[May, 2025]"> 🎉 One paper accepted to the 24th IEEE International Symposium on Mixed and Augmented Reality, and nominated for 🏆 Best Poster Award.</li>
-    	<li class="indented" data-date="[Dec, 2024]"> 🎉 One paper accepted to the 32nd IEEE Conference on Virtual Reality and 3D User Interfaces, and selected for <b><span style="color: red;">Oral</span></b> presentation.</li>
-    	<li class="indented" data-date="[Dec, 2023]"> 🏆 Received the Outstanding Award (Top 5%) in the 18th “Challenge Cup” National College Student Extracurricular Academic and Technological Works Competition.</li>
-   	  <!-- <li class="indented" data-date="[Oct, 2022]"> One paper accepted to 36th Conference on Neural Information Processing Systems, GLFrontiers, and selected for <b><span style="color: red;">Oral</span></b> presentation.</li>
-   	  <li class="indented" data-date="[Dec, 2023]"> 🎖️ Two papers accepted to 36th Conference on Neural Information Processing Systems, and one paper selected for <b><span style="color: red;">Spotlight</span></b> presentation.</li> -->
+<div id="news" class="bio news-section">
+  <div class="section-header">
+    <h1 class="md-heading text-left">
+      <i class="fa fa-tasks" aria-hidden="true"></i>
+      News
+    </h1>
+    <span class="section-eyebrow">Recent updates</span>
+  </div>
+  <ul class="news-list">
+    <li class="news-item">
+      <time datetime="2026-02">Feb, 2026</time>
+      <span>One paper accepted to the 14th International Conference on Learning Representations.</span>
+    </li>
+    <li class="news-item news-item-award">
+      <time datetime="2025-10">Oct, 2025</time>
+      <span>As Team Leader, won 3rd Place in the IROS 2025 InternUtopia &amp; Real-World Challenge, Track 1 (Manipulation).</span>
+    </li>
+    <li class="news-item">
+      <time datetime="2025-05">May, 2025</time>
+      <span>One paper accepted to the 24th IEEE International Symposium on Mixed and Augmented Reality, and nominated for Best Poster Award.</span>
+    </li>
+    <li class="news-item">
+      <time datetime="2024-12">Dec, 2024</time>
+      <span>One paper accepted to the 32nd IEEE Conference on Virtual Reality and 3D User Interfaces, and selected for <b>Oral</b> presentation.</span>
+    </li>
+    <li class="news-item news-item-award">
+      <time datetime="2023-12">Dec, 2023</time>
+      <span>Received the Outstanding Award (Top 5%) in the 18th Challenge Cup National College Student Extracurricular Academic and Technological Works Competition.</span>
+    </li>
   </ul>
 </div>
 
-<div id="publications" class="publications">
-  <h1 class="md-heading text-left">
-    <i class="fa fa-file" aria-hidden="true"></i>
-    Publications (<button class="custom-button" id="show-selected-btn"> Show Representative </button> / <button class="custom-button" id="show-all-btn"> Show All </button>)
-  </h1>
-
-
+<div id="publications" class="publications publication-section">
+  <div class="section-header publication-header">
+    <h1 class="md-heading text-left">
+      <i class="fa fa-file" aria-hidden="true"></i>
+      Publications
+    </h1>
+    <div class="publication-actions" aria-label="Publication filters">
+      <button class="custom-button is-active" id="show-selected-btn" type="button">Representative</button>
+      <button class="custom-button" id="show-all-btn" type="button">All</button>
+    </div>
+  </div>
 
   <div class="pub-list">
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/ICLR2026.png">
+        <img class="intro-img frame" src="images/ICLR2026.png" alt="ICLR 2026 publication preview">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -534,10 +554,9 @@ I'm always looking for related colaboration. If you are interested to chat with 
         </div>
         <div class="publish">
           <span class="place">ICLR 2026</span>
-          <span class="place"></span>
         </div>
         <div class="tags">
-          [<a class="tag" href="https://www.microsoft.com/en-us/research/publication/synergizing-understanding-and-generation-with-interleaved-analyzing-drafting-thinking/" target="_blank">Paper</a>]
+          <a class="tag" href="https://www.microsoft.com/en-us/research/publication/synergizing-understanding-and-generation-with-interleaved-analyzing-drafting-thinking/" target="_blank" rel="noopener noreferrer">Paper</a>
           <!-- [<a class="tag" href="https://opensii.ai/" target="_blank">Website</a>] -->
         </div>
       </div>
@@ -545,7 +564,7 @@ I'm always looking for related colaboration. If you are interested to chat with 
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/DeepCognition.png">
+        <img class="intro-img frame" src="images/DeepCognition.png" alt="DeepCognition publication preview">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -563,11 +582,10 @@ I'm always looking for related colaboration. If you are interested to chat with 
         </div>
         <div class="publish">
           <span class="place">arXiv 2025</span>
-          <span class="place"></span>
         </div>
         <div class="tags">
-          [<a class="tag" href="https://arxiv.org/pdf/2507.15759" target="_blank">Paper</a>]
-          [<a class="tag" href="https://opensii.ai/" target="_blank">Website</a>]
+          <a class="tag" href="https://arxiv.org/pdf/2507.15759" target="_blank" rel="noopener noreferrer">Paper</a>
+          <a class="tag" href="https://opensii.ai/" target="_blank" rel="noopener noreferrer">Website</a>
           <!-- [<a class="tag" href="https://youtu.be/t1vl7MzGb2Q" target="_blank">Video</a>] -->
         </div>
       </div>
@@ -575,7 +593,7 @@ I'm always looking for related colaboration. If you are interested to chat with 
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/VISTA.png">
+        <img class="intro-img frame" src="images/VISTA.png" alt="VISTA publication preview">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -593,11 +611,9 @@ I'm always looking for related colaboration. If you are interested to chat with 
         </div>
         <div class="publish">
           <span class="place">ISMAR 2025, Best Poster Award</span>
-          <span class="place"></span>
         </div>
         <div class="tags">
-          [<a class="tag" href="https://arxiv.org/pdf/2508.18481" target="_blank">Paper</a>]
-          [<a class="tag" href="" target="_blank">Code</a>]
+          <a class="tag" href="https://arxiv.org/pdf/2508.18481" target="_blank" rel="noopener noreferrer">Paper</a>
           <!-- [<a class="tag" href="https://github.com/" target="_blank">Code</a>] -->
         </div>
       </div>
@@ -605,7 +621,7 @@ I'm always looking for related colaboration. If you are interested to chat with 
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/MRUCT.png">
+        <img class="intro-img frame" src="images/MRUCT.png" alt="MRUCT publication preview">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -623,19 +639,17 @@ I'm always looking for related colaboration. If you are interested to chat with 
         </div>
         <div class="publish">
           <span class="place">IEEE VR 2025 Oral</span>
-          <span class="place"></span>
         </div>
         <div class="tags">
-          [<a class="tag" href="https://ieeexplore.ieee.org/document/10937474" target="_blank">Paper</a>]
+          <a class="tag" href="https://ieeexplore.ieee.org/document/10937474" target="_blank" rel="noopener noreferrer">Paper</a>
           <!-- [<a class="tag" href="https://github.com/" target="_blank">Code</a>] -->
-          [<a class="tag" href="" target="_blank">Code</a>]
         </div>
       </div>
     </div>
 
     <div class="pub" data-selected="true">
       <div class="pub-left">
-        <img class="intro-img frame" src="images/DipMe.png">
+        <img class="intro-img frame" src="images/DipMe.png" alt="DipMe publication preview">
       </div>
       <div class="pub-right">
         <div class="title">
@@ -653,11 +667,9 @@ I'm always looking for related colaboration. If you are interested to chat with 
         </div>
         <div class="publish">
           <span class="place">arXiv 2024</span>
-          <span class="place"></span>
         </div>
         <div class="tags">
-          [<a class="tag" href="https://arxiv.org/pdf/2411.08641" target="_blank">Paper</a>]
-          [<a class="tag" href="" target="_blank">Code</a>]
+          <a class="tag" href="https://arxiv.org/pdf/2411.08641" target="_blank" rel="noopener noreferrer">Paper</a>
         </div>
       </div>
     </div> 
@@ -694,27 +706,28 @@ I'm always looking for related colaboration. If you are interested to chat with 
 	
 <!-- JavaScript to handle button clicks -->
 <script>
-  // Get the buttons and publications
   const showSelectedBtn = document.getElementById('show-selected-btn');
   const showAllBtn = document.getElementById('show-all-btn');
-  const publications = document.querySelectorAll('.pub');
+  const publications = document.querySelectorAll('#publications .pub');
 
-  // Add event listener to 'Show Selected Publication' button
   showSelectedBtn.addEventListener('click', function() {
     publications.forEach(pub => {
       if (pub.getAttribute('data-selected') === 'true') {
-        pub.style.display = 'block';  // Show selected publication
+        pub.style.display = '';
       } else {
-        pub.style.display = 'none';  // Hide other publications
+        pub.style.display = 'none';
       }
     });
+    showSelectedBtn.classList.add('is-active');
+    showAllBtn.classList.remove('is-active');
   });
 
-  // Add event listener to 'Show All' button
   showAllBtn.addEventListener('click', function() {
     publications.forEach(pub => {
-      pub.style.display = 'block';  // Show all publications
+      pub.style.display = '';
     });
+    showAllBtn.classList.add('is-active');
+    showSelectedBtn.classList.remove('is-active');
   });
 </script>
 
