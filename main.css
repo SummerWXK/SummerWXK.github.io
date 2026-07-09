@@ -1946,6 +1946,14 @@ div.paginate-container li:nth-last-child(2) a:after {
     font-weight: 700
 }
 
+#publications .pub-note {
+    color: #6f5d54;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.42;
+    margin: 3px 0 2px
+}
+
 #publications .pub-right > .publish {
     float: none;
     display: flex;
