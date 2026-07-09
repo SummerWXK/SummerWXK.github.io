@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LingBot-Video: Mixture-of-Experts Video Pretraining for Embodied Intelligence</title>
+  <script>
+    window.MathJax = {
+      loader: { load: ["[tex]/ams"] },
+      tex: {
+        packages: { "[+]": ["ams"] },
+        inlineMath: [["\\(", "\\)"]],
+        displayMath: [["\\[", "\\]"]],
+        processEscapes: true
+      },
+      svg: { fontCache: "global" }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --paper: #f7f4ec;
+      --paper-deep: #ebe3d2;
+      --ink: #17211d;
+      --muted: #68716b;
+      --line: rgba(23, 33, 29, 0.14);
+      --line-strong: rgba(23, 33, 29, 0.28);
+      --teal: #1b5c63;
+      --teal-soft: #dcebed;
+      --rust: #a94f2d;
+      --rust-soft: #f2ded2;
+      --moss: #596b3f;
+      --moss-soft: #e6ead9;
+      --gold: #b88a2d;
+      --code: #18201d;
+      --code-soft: #202b27;
+      --shadow: 0 24px 70px rgba(32, 24, 10, 0.12);
+      --serif: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", Georgia, serif;
+      --sans: "Gill Sans", "Avenir Next", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --mono: "SFMono-Regular", "Menlo", "Consolas", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.82;
+      background:
+        linear-gradient(90deg, rgba(27, 92, 99, 0.04) 1px, transparent 1px),
+        linear-gradient(rgba(27, 92, 99, 0.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+    }
+
+    a {
+      color: var(--teal);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.88em;
+      color: #173f44;
+      background: rgba(27, 92, 99, 0.1);
+      border: 1px solid rgba(27, 92, 99, 0.18);
+      border-radius: 4px;
+      padding: 0.08em 0.32em;
+    }
+
+    pre {
+      margin: 0;
+      overflow: auto;
+      color: #e8efe9;
+      background: var(--code);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 18px;
+      line-height: 1.58;
+      font-size: 13px;
+    }
+
+    pre code {
+      color: inherit;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 78vh;
+      display: grid;
+      align-items: end;
+      overflow: hidden;
+      color: #fffaf1;
+      background: #111;
+      isolation: isolate;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background:
+        linear-gradient(90deg, rgba(10, 14, 12, 0.86) 0%, rgba(10, 14, 12, 0.48) 44%, rgba(10, 14, 12, 0.18) 100%),
+        linear-gradient(0deg, rgba(10, 14, 12, 0.96) 0%, rgba(10, 14, 12, 0.12) 55%),
+        url("lingbot_video_assets/teaser.png") center / cover no-repeat;
+      filter: saturate(0.96);
+      transform: scale(1.02);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-image: radial-gradient(rgba(255,255,255,0.14) 0.7px, transparent 0.7px);
+      background-size: 4px 4px;
+      opacity: 0.18;
+      mix-blend-mode: screen;
+    }
+
+    .hero-inner {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 110px 0 58px;
+    }
+
+    .kicker {
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.4;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #f0d49a;
+      margin-bottom: 18px;
+      font-weight: 700;
+    }
+
+    h1 {
+      max-width: 940px;
+      margin: 0;
+      font-size: clamp(46px, 8vw, 94px);
+      line-height: 0.96;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      max-width: 760px;
+      margin: 24px 0 0;
+      font-size: clamp(20px, 2.5vw, 28px);
+      line-height: 1.5;
+      color: rgba(255, 250, 241, 0.86);
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: rgba(255, 250, 241, 0.82);
+    }
+
+    .hero-meta span {
+      border: 1px solid rgba(255, 250, 241, 0.28);
+      background: rgba(255, 250, 241, 0.08);
+      border-radius: 999px;
+      padding: 7px 12px;
+      backdrop-filter: blur(8px);
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 900px);
+      gap: 42px;
+      width: min(1220px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 54px 0 90px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      padding: 18px 0 18px 18px;
+      border-left: 2px solid var(--line);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .toc-title {
+      margin: 0 0 10px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .toc a {
+      display: block;
+      margin: 9px 0;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      color: var(--teal);
+    }
+
+    article {
+      min-width: 0;
+    }
+
+    section {
+      margin: 0 0 72px;
+      scroll-margin-top: 24px;
+    }
+
+    h2 {
+      margin: 0 0 22px;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.12;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    h3 {
+      margin: 34px 0 12px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    p {
+      margin: 0 0 16px;
+    }
+
+    .lead {
+      font-size: 22px;
+      line-height: 1.75;
+      color: #23302b;
+    }
+
+    .tldr {
+      border: 1px solid rgba(27, 92, 99, 0.26);
+      border-left: 6px solid var(--teal);
+      background: linear-gradient(135deg, rgba(220, 235, 237, 0.98), rgba(247, 244, 236, 0.92));
+      border-radius: 8px;
+      padding: 24px 26px;
+      box-shadow: var(--shadow);
+      margin-bottom: 42px;
+    }
+
+    .tldr h2 {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .tldr ul,
+    .plain-list {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    .tldr li,
+    .plain-list li {
+      margin: 8px 0;
+    }
+
+    .claim-map {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 26px 0 8px;
+    }
+
+    .claim {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.46);
+      padding: 16px;
+      min-height: 170px;
+    }
+
+    .claim strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: var(--teal);
+      font-family: var(--sans);
+    }
+
+    .claim p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.68;
+      color: #33413b;
+    }
+
+    .figure-card {
+      margin: 26px 0 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.56);
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(32, 24, 10, 0.08);
+    }
+
+    .figure-card img {
+      width: 100%;
+      max-height: 840px;
+      object-fit: contain;
+      background: #fff;
+      cursor: zoom-in;
+    }
+
+    .figure-card.tall img {
+      max-height: 920px;
+    }
+
+    figcaption {
+      padding: 14px 18px 16px;
+      border-top: 1px solid var(--line);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.58;
+      color: #58625d;
+      background: rgba(247, 244, 236, 0.78);
+    }
+
+    .read-figure {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      margin: 18px 0 28px;
+      padding: 18px;
+      border-top: 1px solid var(--line-strong);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.34);
+    }
+
+    .read-figure b {
+      font-family: var(--sans);
+      color: var(--rust);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .read-figure p {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.74;
+    }
+
+    .figure-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .mini-fig {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .mini-fig img {
+      width: 100%;
+      min-height: 230px;
+      object-fit: contain;
+      background: #fff;
+      cursor: zoom-in;
+    }
+
+    .mini-fig figcaption {
+      min-height: 76px;
+    }
+
+    .callout {
+      margin: 24px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px 20px;
+      background: rgba(255, 255, 255, 0.52);
+    }
+
+    .callout.good {
+      border-left: 6px solid var(--moss);
+      background: linear-gradient(135deg, var(--moss-soft), rgba(255, 255, 255, 0.55));
+    }
+
+    .callout.info {
+      border-left: 6px solid var(--teal);
+      background: linear-gradient(135deg, var(--teal-soft), rgba(255, 255, 255, 0.55));
+    }
+
+    .callout.warn {
+      border-left: 6px solid var(--rust);
+      background: linear-gradient(135deg, var(--rust-soft), rgba(255, 255, 255, 0.55));
+    }
+
+    .callout h3 {
+      margin-top: 0;
+      font-size: 21px;
+    }
+
+    .equation {
+      margin: 22px 0;
+      padding: 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(169, 79, 45, 0.24);
+      background: rgba(242, 222, 210, 0.58);
+      font-family: var(--serif);
+      font-size: 16px;
+      line-height: 1.75;
+      overflow-x: auto;
+    }
+
+    .equation mjx-container {
+      margin: 0.35em 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .equation .eq-note {
+      margin: 8px 0 0;
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.55;
+      color: #65483c;
+    }
+
+    .table-wrap {
+      margin: 24px 0;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.54);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.52;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(27, 92, 99, 0.09);
+      color: #183b40;
+      font-weight: 800;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .code-card {
+      margin: 24px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+      background: var(--code);
+    }
+
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--code-soft);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: #dbe8df;
+      font-family: var(--sans);
+      font-size: 13px;
+    }
+
+    .code-head span:first-child {
+      color: #f0d49a;
+      font-weight: 800;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin: 24px 0;
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .flow .node {
+      min-height: 118px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.52);
+      padding: 14px;
+      position: relative;
+    }
+
+    .flow .node::after {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      right: -12px;
+      transform: translateY(-50%);
+      color: var(--rust);
+      font-weight: 800;
+    }
+
+    .flow .node:last-child::after {
+      content: "";
+    }
+
+    .node b {
+      display: block;
+      color: var(--teal);
+      margin-bottom: 6px;
+    }
+
+    .pull {
+      margin: 34px 0;
+      padding: 24px 28px;
+      border-top: 3px solid var(--ink);
+      border-bottom: 1px solid var(--line-strong);
+      font-size: 26px;
+      line-height: 1.55;
+      font-weight: 800;
+      color: #1e2a26;
+      background: rgba(255, 255, 255, 0.38);
+    }
+
+    .metric-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 24px 0;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: rgba(255,255,255,0.56);
+      font-family: var(--sans);
+    }
+
+    .metric b {
+      display: block;
+      color: var(--rust);
+      font-size: 24px;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0 8px;
+    }
+
+    .tag {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: #21322e;
+      background: rgba(184, 138, 45, 0.16);
+      border: 1px solid rgba(184, 138, 45, 0.28);
+      border-radius: 999px;
+      padding: 5px 10px;
+    }
+
+    .credit-note {
+      margin: 0 0 38px;
+      padding: 18px 22px;
+      border-top: 2px solid var(--line-strong);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.38);
+      color: #555e59;
+      font-size: 20px;
+      line-height: 1.68;
+    }
+
+    .credit-note p {
+      margin: 0;
+    }
+
+    .credit-note strong {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .credit-note a {
+      color: #8b3f39;
+      text-decoration-style: dotted;
+    }
+
+    .ending {
+      border-top: 3px solid var(--ink);
+      padding-top: 28px;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 14, 12, 0.88);
+      padding: 30px;
+      z-index: 50;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: min(96vw, 1600px);
+      max-height: 92vh;
+      object-fit: contain;
+      background: #fff;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.36);
+    }
+
+    .lightbox button {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      border: 1px solid rgba(255,255,255,0.42);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border-radius: 999px;
+      width: 42px;
+      height: 42px;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 18px;
+        border-left: 0;
+        border-top: 2px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 16px 0;
+      }
+
+      .toc-title {
+        grid-column: 1 / -1;
+      }
+
+      .claim-map,
+      .metric-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .flow .node::after {
+        content: "↓";
+        top: auto;
+        bottom: -22px;
+        right: 50%;
+        transform: translateX(50%);
+      }
+    }
+
+    @media (max-width: 680px) {
+      body {
+        font-size: 16px;
+      }
+
+      .hero {
+        min-height: 72vh;
+      }
+
+      .hero-inner,
+      .shell {
+        width: min(100% - 26px, 1180px);
+      }
+
+      .subtitle {
+        font-size: 18px;
+      }
+
+      .figure-grid,
+      .claim-map,
+      .metric-list,
+      .toc {
+        grid-template-columns: 1fr;
+      }
+
+      .read-figure {
+        grid-template-columns: 1fr;
+      }
+
+      .pull {
+        font-size: 21px;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="kicker">Paper Guide · Embodied Video Models</div>
+      <h1>LingBot-Video：视频生成模型如何变成具身世界模拟器</h1>
+      <p class="subtitle">从 Single-Stream DiT、Sparse MoE、结构化数据、奖励后训练到开源推理代码的一次完整拆解。</p>
+      <div class="hero-meta">
+        <span>Mixture-of-Experts Video Pretraining</span>
+        <span>T2V · TI2V · A2V</span>
+        <span>Qwen3-VL · Wan2.1-VAE · Diffusers/SGLang</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <nav class="toc" aria-label="文章目录">
+      <p class="toc-title">Reading Map</p>
+      <a href="#tldr">00 · 先抓住主线</a>
+      <a href="#problem">01 · 问题从哪里来</a>
+      <a href="#architecture">02 · 单流 DiT 架构</a>
+      <a href="#moe">03 · MoE 为什么必要</a>
+      <a href="#scaling">04 · Scaling 与 Refiner</a>
+      <a href="#data">05 · 数据系统</a>
+      <a href="#training">06 · 后训练与 A2V</a>
+      <a href="#evaluation">07 · 评测证据</a>
+      <a href="#code">08 · 代码怎么落地</a>
+      <a href="#critique">09 · 优缺点与后续</a>
+    </nav>
+
+    <article>
+      <div class="credit-note">
+        <p><strong>解读 by Xinkai Wang（王薪恺）</strong> · 上海创智学院 · 2026</p>
+        <p>原论文：<a href="https://arxiv.org/abs/2607.07675">LingBot-Video: Scaling Mixture-of-Experts Video Pretraining for Embodied Intelligence</a> · 图表版权归原作者；本文解读版权归 Xinkai Wang（王薪恺）所有。</p>
+      </div>
+
+      <section id="tldr" class="tldr">
+        <h2>00 · 先抓住主线</h2>
+        <ul>
+          <li><strong>问题：</strong>通用视频模型擅长“好看”和“文本对齐”，但具身智能更需要从当前观察推演未来状态，尤其是接触、遮挡、物体保持、机器人动作和物理合理性。</li>
+          <li><strong>架构：</strong>LingBot-Video 用 single-stream diffusion transformer 统一 T2I/T2V/TI2V，把视觉 latent patch 与 Qwen3-VL 条件 token 拼成一条序列，再用 Multi-Modal 3D RoPE 区分文本和视频坐标。</li>
+          <li><strong>扩展：</strong>Sparse MoE 替换 FFN 分支，用 128 个细粒度专家、top-8 路由和 shared experts 做容量-计算解耦；30B-A3B 模型能接近 3B dense 的推理成本，却获得更强容量。</li>
+          <li><strong>数据：</strong>论文真正的工程量在数据系统：profiling engine、world-knowledge graph、dense JSON captions、rewriter、五阶段 curriculum，以及 70,000+ 小时具身相关视频。</li>
+          <li><strong>训练：</strong>后训练不是一个 reward model 打天下，而是六类 reward、GRPO、RealNFT、A2V action-conditioned world model 和 distillation 组合起来，把视频生成往物理推演拉。</li>
+        </ul>
+      </section>
+
+      <section id="problem">
+        <h2>01 · 问题从哪里来：视频模型不只是会画，还要会推演</h2>
+        <p class="lead">如果只把 LingBot-Video 看成“一个 MoE 视频生成模型”，其实会漏掉它最核心的野心。它想回答的问题是：当机器人看到桌面、机械臂和目标物体后，模型能不能预测接下来几秒物理世界会怎样变化？</p>
+        <p>传统 T2V 模型的优化目标大多围绕美观、文本相关性和时序一致性。这些指标对内容创作足够重要，但对具身智能还不够。机器人更关心的是：苹果被夹起时会不会穿模？杯子被碰到后是否还保持存在？手指、夹爪、物体接触点是否合理？第一帧给定的场景外观是否能在未来帧中稳定延续？</p>
+
+        <figure class="figure-card">
+          <img src="lingbot_video_assets/teaser.png" alt="LingBot-Video teaser with qualitative generation examples" loading="eager" decoding="async" />
+          <figcaption>论文 teaser：作者把 general video generation 与 embodied world simulation 放在同一版面，机器人、第一视角、操作、导航和物理过程反复出现，文章重心也从画面质感转向动作和世界状态的延续。</figcaption>
+        </figure>
+        <div class="read-figure">
+          <b>图里线索</b>
+          <p>这组 teaser 给出的不是单纯 showcase，而是一套评价轴：动作、交互、机器人形态和第一视角不断出现，模型能力的目标也从“prompt 到漂亮视频”转向“当前世界状态到未来视觉状态”。</p>
+        </div>
+
+        <div class="claim-map">
+          <div class="claim">
+            <strong>Architecture</strong>
+            <p>单流 DiT 最大化 token 交互和计算复用，MoE 提供大容量但控制 active FLOPs。</p>
+          </div>
+          <div class="claim">
+            <strong>Data</strong>
+            <p>结构化 profiling 与知识图谱让采样从“质量过滤”升级到“分布诊断”。</p>
+          </div>
+          <div class="claim">
+            <strong>Training</strong>
+            <p>六类 reward、GRPO、RealNFT 把偏好从视觉质量推向动作、速度、物理和任务完成。</p>
+          </div>
+          <div class="claim">
+            <strong>Embodiment</strong>
+            <p>A2V 把 prompt 驱动视频改成 action-conditioned rollout，更接近世界模型用法。</p>
+          </div>
+        </div>
+
+        <div class="pull">这篇论文的主线不是“MoE 让参数变大”，而是“如何把视频生成模型重新组织成具身智能可用的视觉世界模拟器”。</div>
+      </section>
+
+      <section id="architecture">
+        <h2>02 · 单流 DiT：把文本、图像、视频条件放进同一条序列</h2>
+        <p>LingBot-Video 的 base generator 是 task-unified single-stream diffusion transformer。输入图像或视频先经 Wan2.1-VAE 压成 latent，条件部分由 Qwen3-VL-4B 提取 embedding；随后视觉 patch token 与条件 token 投到同一 hidden size，拼成一条 joint sequence。</p>
+
+        <figure class="figure-card">
+          <img src="lingbot_video_assets/architecture.png" alt="LingBot-Video single-stream DiT architecture" loading="lazy" decoding="async" />
+          <figcaption>架构图：视觉 latent patch 与 multimodal condition token 进入同一 transformer stack。attention 分支使用 QK-Norm 与 Multi-Modal 3D RoPE；FFN 分支可替换为 Sparse MoE，并用 AdaLN-Single 的 timestep modulation 控制残差。</figcaption>
+        </figure>
+        <div class="read-figure">
+          <b>图里线索</b>
+          <p>图里真正关键的是“单流”和“只替换 FFN”。单流意味着文本和视频 token 每层都可互相注意；只替换 FFN 意味着 MoE 不改变 attention 主干，而是在 token-wise feed-forward 位置做 conditional computation。</p>
+        </div>
+
+        <h3>统一 T2I / T2V / TI2V 的方式</h3>
+        <p>论文把图像看作 <code>T=1</code> 的特殊视频，T2V 是无首帧条件的视频生成，TI2V 则把第一帧作为视觉条件。这样做的好处是任务不需要分叉成多个模型，也不需要为每种任务单独设计 encoder。代价是模型必须在一条序列里区分“条件 token”和“目标视觉 token”。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>模块</th>
+                <th>论文设计</th>
+                <th>代码对应点</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>视觉压缩</td>
+                <td>Wan2.1-VAE，空间约 8 倍压缩，时间约 4 倍压缩。</td>
+                <td><code>pipeline_lingbot_video.py</code> 中 latent shape 由 <code>vae_scale_factor_spatial</code> 与 temporal scale 决定。</td>
+              </tr>
+              <tr>
+                <td>条件编码</td>
+                <td>Qwen3-VL-4B 把 prompt / image 条件变成 condition embedding。</td>
+                <td><code>encode_prompt</code> 应用 chat template、image/video token，再裁掉前缀。</td>
+              </tr>
+              <tr>
+                <td>联合序列</td>
+                <td>视觉 patch 和 text condition 投影到同一维度后拼接。</td>
+                <td><code>LingBotVideoTransformer3DModel.forward</code> 中 <code>joint = torch.cat([x, text], dim=1)</code>。</td>
+              </tr>
+              <tr>
+                <td>位置编码</td>
+                <td>condition token 走 temporal-only 坐标，video token 走 <code>(t,h,w)</code> 坐标。</td>
+                <td><code>make_joint_position_ids</code> 让 video 时间轴从 <code>text_len + 1</code> 开始。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-card">
+          <div class="code-head"><span>代码锚点</span><span>transformer_lingbot_video.py</span></div>
+          <pre><code>def make_joint_position_ids(text_len, grid_t, grid_h, grid_w, device):
+    tt = torch.arange(grid_t, device=device) + (text_len + 1)
+    hh = torch.arange(grid_h, device=device)
+    ww = torch.arange(grid_w, device=device)
+    grid = torch.stack(torch.meshgrid(tt, hh, ww, indexing="ij"), dim=-1).flatten(0, 2)
+
+    text_t = torch.arange(text_len, device=device) + 1
+    zeros = torch.zeros_like(text_t)
+    text_pos = torch.stack([text_t, zeros, zeros], dim=-1)
+    return torch.cat([grid, text_pos], dim=0)</code></pre>
+        </div>
+
+        <p>这段代码是 Multi-Modal 3D RoPE 的落点：文本 token 只占时间轴，视觉 token 的时间坐标从文本之后开始。它解决的是“同一 attention 空间里，文本和视频不要位置混淆”的问题。</p>
+
+        <h3>为什么坚持 single-stream</h3>
+        <p>双流架构通常让文本/条件和视频 latent 分开处理，再在某些层交互。LingBot-Video 的选择更像 decoder-only LLM：先投影到同一维度，再全层共享 attention 和 FFN。论文给出的理由有三层：</p>
+        <ul class="plain-list">
+          <li><strong>交互密度更高：</strong>每层都能做跨模态 attention，不只在 cross-attention 层交换信息。</li>
+          <li><strong>算子更规整：</strong>大 GEMM、FlashAttention varlen、sequence parallel 更容易统一处理。</li>
+          <li><strong>任务更统一：</strong>T2I/T2V/TI2V 不需要 task-specific path，训练 mixture 更直接。</li>
+        </ul>
+
+        <div class="callout info">
+          <h3>一句话理解 single-stream DiT</h3>
+          <p>它不是“文本指导视频”的旁路结构，而是把文本条件也放进视频 token 的同一个 transformer 世界里，让每一层都能学习条件、画面、时间和空间之间的关系。</p>
+        </div>
+      </section>
+
+      <section id="moe">
+        <h2>03 · MoE：给复杂物理世界更大容量，但不让每个 token 都付全价</h2>
+        <p>视频世界的分布太杂：手、脸、机械臂、液体、刚体、第一视角、运动模糊、镜头移动、低噪声细节修复、高噪声布局生成。这些子问题如果全塞进一个 dense FFN，容易出现任务干扰。MoE 的直觉是让每个 token 在 FFN 分支里选择少数专家，保留总容量，同时控制 active compute。</p>
+
+        <div class="equation">
+          \[
+          \mathrm{MoE}(x)
+          =
+          E_{\mathrm{shared}}(x)
+          +
+          \sum_{j\in \mathrm{TopK}(x)}
+          g_j(x)\,E_j(x)
+          \]
+          <p class="eq-note">每个 token 只走 top-K routed experts，但模型总参数随 expert pool 增大。</p>
+        </div>
+
+        <h3>论文里的 MoE recipe</h3>
+        <p>LingBot-Video 采用 DeepSeekMoE 风格的细粒度专家划分：shared experts 保留通用物理/空间先验，routed experts 捕捉更细的视觉、动作、噪声段和任务差异。关键设置是 <code>E=128</code>、每 token top-8 路由、active parameter 约 1.4B 或 3B，最大探索到 120B total / 11B active。</p>
+
+        <div class="metric-list">
+          <div class="metric">
+            <b>128</b>
+            <span>默认 routed expert 数。论文认为 64 到 128 收益明显，128 到 256 边际收益变小。</span>
+          </div>
+          <div class="metric">
+            <b>top-8</b>
+            <span>细粒度 128/top-8 优于更粗的 64/top-4，即便后者 active 参数更高。</span>
+          </div>
+          <div class="metric">
+            <b>30B-A3B</b>
+            <span>30B 总参数、约 3B active 参数，是开源包重点释放的 MoE 推理模型。</span>
+          </div>
+        </div>
+
+        <div class="code-card">
+          <div class="code-head"><span>Router 的关键不对称</span><span>selection 用 bias，gating 用原始 score</span></div>
+          <pre><code>logits = F.linear(tokens.float(), self.weight.float())
+scores = logits.sigmoid()
+scores_for_choice = scores + self.e_score_correction_bias.unsqueeze(0)
+
+top_indices = self._group_limited_topk(scores_for_choice)
+top_scores = scores.gather(1, top_indices)
+top_scores = top_scores / (top_scores.sum(dim=-1, keepdim=True) + 1e-20)
+top_scores = top_scores * self.route_scale</code></pre>
+        </div>
+
+        <p>这段实现里有个很细的设计：<code>e_score_correction_bias</code> 只参与选择专家，不参与最终 gate weight。bias 更像负载均衡的调度提示，真正给专家输出加权时仍用原始 affinity；这样既能缓解专家负载不均，又不会把负载修正直接混进表示强度。</p>
+
+        <div class="callout info">
+          <h3><code>e_score_correction_bias</code> 到底是不是训练参数</h3>
+          <p>在开源推理代码里，它是 persistent buffer，不是 <code>nn.Parameter</code>，不会通过反向传播跟着 loss 更新。论文训练阶段提到的更新更像路由层外部的负载校正：如果某个专家拿到的 token 比平均值多，就降低它的选择 bias；如果太少，就抬高一点。可以把它理解成 router 的“排队调度权重”，不是专家本身的语义能力。</p>
+          <div class="equation">
+            \[
+            b_j \leftarrow b_j - \eta\,\operatorname{sign}(n_j-\bar n),
+            \qquad
+            \mathrm{choice}_j \propto s_j + b_j
+            \]
+            <p class="eq-note">选择专家看 \(s_j+b_j\)，最终加权仍看原始 score \(s_j\)。</p>
+          </div>
+        </div>
+
+        <h3>为什么视频 MoE 比语言 MoE 更容易踩坑</h3>
+        <p>视频 token 数远大于文本，而且 diffusion 每个 denoising step 都要重复处理整段 latent。router 如果造成跨卡通信过多、专家负载极不均、token restore 开销过大，理论上的 sparse 优势很容易被工程开销吃掉。代码里能看到三类工程处理：</p>
+        <ul class="plain-list">
+          <li><strong>group-limited routing：</strong>先选 expert group，再在 group 内 top-K，减少分布式通信压力。</li>
+          <li><strong>grouped experts：</strong>用 <code>torch._grouped_mm</code>、Triton pack/restore 或 SGLang fused experts 执行专家矩阵乘。</li>
+          <li><strong>FP32 sensitive path：</strong>norm、router、time modulation、scale-shift 等模块在 <code>.to()</code> 里保持 fp32，降低混精不稳定风险。</li>
+        </ul>
+
+        <p>开源 30B-A3B 配置里是 <code>128</code> 个 routed experts、<code>4</code> 个 group、每 token 选 <code>top-8</code> experts，并额外保留 <code>1</code> 个 shared expert。换成路由流程就是：先把 128 个专家切成 4 组，每组 32 个；router 先挑出分数较高的 2 个组，再只在这 64 个候选专家里选 top-8。这样做牺牲了一点全局自由度，但能明显压住 dispatch 和跨卡通信。</p>
+
+        <div class="code-card">
+          <div class="code-head"><span>Grouped experts 的执行形态</span><span>pack -> grouped GEMM -> restore</span></div>
+          <pre><code># 1. 按专家把 token route 打包成连续块
+packed_tokens, expert_offsets = reorder_tokens_triton_pack(tokens, top_indices)
+
+# 2. 每个专家各有一套 FFN 权重，但用 grouped GEMM 合并执行
+hidden = silu(grouped_mm(packed_tokens, w1)) * grouped_mm(packed_tokens, w3)
+expert_out = grouped_mm(hidden, w2)
+
+# 3. 按原 token 顺序还原，并乘以 router gate weight 做加权求和
+output = restore_tokens_triton(expert_out, top_indices, top_scores)</code></pre>
+        </div>
+
+        <p><code>torch._grouped_mm</code> 可以把“很多个小专家矩阵乘”拼成一次 grouped matmul，减少 Python 循环和 kernel launch。Triton pack/restore 解决的是 token 顺序问题：专家喜欢连续内存，原序列喜欢按 token 排列，pack 和 restore 就是在这两种布局之间搬运。SGLang fused experts 则把 SwiGLU 的 <code>w1/w3/w2</code> 路径进一步融合，FP8 版本再用量化换速度，所以文档才会提醒它可能带来细微生成差异。</p>
+
+        <div class="callout warn">
+          <h3>MoE 不是免费午餐</h3>
+          <p>MoE 省的是“每个 token 激活全部 FFN 参数”的成本，但会新增 router、token reorder、expert dispatch、跨卡通信和 load balance 问题。LingBot-Video 的贡献不只是用了 MoE，而是围绕视频长序列把这些细节都工程化了。</p>
+        </div>
+      </section>
+
+      <section id="scaling">
+        <h2>04 · Scaling 与 Refiner：容量、延迟和高分辨率怎么一起兼顾</h2>
+        <p>论文的 scaling 实验想证明两件事：第一，在相近 active compute 下，MoE 总容量能显著降低训练/验证 loss；第二，当序列长度上到 1M token 时，MoE 推理延迟仍能接近 active dense 模型，而不是被路由开销击穿。</p>
+
+        <div class="figure-grid">
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/scaling_dense_moe.png" alt="Dense 1.3B versus MoE 13B-A1.4B training and validation losses" loading="lazy" decoding="async" />
+            <figcaption>Dense 1.3B 与 MoE 13B-A1.4B：active compute 接近，但 sparse 总容量更高，训练和验证 loss 都更低。</figcaption>
+          </figure>
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/speed_ratio.png" alt="MoE to dense inference latency ratio" loading="lazy" decoding="async" />
+            <figcaption>推理速度比：1M token 下 MoE 30B-A3B 对 Dense 3B 接近 0.97x，对 Dense 6B/14B/30B 分别约 1.50x/2.59x/3.18x。</figcaption>
+          </figure>
+        </div>
+
+        <div class="read-figure">
+          <b>图里线索</b>
+          <p>MoE 的价值不是“同等参数更快”，而是“同等 active compute 下装下更多知识”。当对手是 active 等价的 Dense 3B，它不一定更快；当对手是同等总容量 dense 模型，延迟优势才显著。</p>
+        </div>
+
+        <div class="figure-grid">
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/scaling_compute.png" alt="Dense and sparse compute scaling curves" loading="lazy" decoding="async" />
+            <figcaption>跨 compute 对比：MoE 30B-A3B 接近 Dense 14B 的训练曲线，说明 sparse capacity 能部分替代 dense compute。</figcaption>
+          </figure>
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/scaling_moe.png" alt="MoE scaling curves from 13B to 120B" loading="lazy" decoding="async" />
+            <figcaption>MoE 13B/30B/60B/120B early-stage scaling：更大 sparse model 在对齐步数下持续降低 loss。</figcaption>
+          </figure>
+        </div>
+
+        <h3>Refiner：从 480p 的世界推演到 1080p 的细节恢复</h3>
+        <p>直接生成 1080p 视频太贵，LingBot-Video 采用 cascaded design：base model 先在 480p 生成全局语义、布局和运动，refiner 再提升到 1080p。它不是从纯高斯噪声开始，而是从退化的低分辨率 latent 附近出发，只在 <code>t ≤ τ</code> 的局部轨迹上做 conditional rectified flow。</p>
+
+        <figure class="figure-card">
+          <img src="lingbot_video_assets/refiner.png" alt="Refiner improves faces, textures, and text rendering" loading="lazy" decoding="async" />
+          <figcaption>Refiner 示例：base 负责动作和构图，refiner 专注人脸、纹理、文字和局部 artifact。论文训练时采样 <code>τ ~ Uniform(0.85, 0.95)</code>，推理中示例使用 <code>τ_inf = 0.85</code>。</figcaption>
+        </figure>
+
+        <p>代码里，refiner 的路径在 <code>runner.py</code> 中比较清楚：先读 base 输出视频，resize 到 refiner 目标分辨率，用 VAE 编成 <code>x_up</code>，加噪到阈值时间，再调用 refiner pipeline。TI2V 情况下还会把原始首帧 clean latent 注入，避免高分辨率阶段漂移首帧外观。</p>
+
+        <div class="code-card">
+          <div class="code-head"><span>Refiner 的初始 latent</span><span>utils.py / runner.py</span></div>
+          <pre><code># x_up 是 base 视频放大后再经 VAE 编码得到的 latent
+initial_latent = (1.0 - t_thresh) * x_up + t_thresh * noise
+
+# 默认参数
+refiner_steps = 8
+t_thresh = 0.85
+refiner_sigma_tail_steps = 2</code></pre>
+        </div>
+
+        <p>这解释了 refiner 为什么不是普通超分插值：它先把已经有结构的 <code>x_up</code> 推到一个中高噪声状态，再让单独训练的 refiner DiT 沿着低噪声轨迹往回修。</p>
+
+        <div class="equation">
+          \[
+          \hat v_\theta = f_\theta(x_t,t,c),
+          \qquad
+          x_{t-\Delta t}=\operatorname{SchedulerStep}(x_t,\hat v_\theta)
+          \]
+        </div>
+
+        <p><code>compute_refiner_sigmas</code> 还会根据 <code>t_thresh</code> 重写 scheduler 的时间表。默认 <code>refiner_steps=8</code> 先生成一条完整 schedule，随后扔掉高于 <code>0.85</code> 的噪声点，在开头插入 <code>0.85</code>，最后补两个低噪声 tail step。默认设置下通常仍是 8 次 denoise；如果改 <code>t_thresh</code> 或 <code>refiner_sigma_tail_steps</code>，实际循环次数就会跟着最后的 sigma 列表变化。</p>
+
+        <div class="equation">
+          \[
+          \sigma_{\mathrm{refiner}}
+          \approx
+          [0.85,\;0.833,\;0.750,\;0.642,\;0.500,\;0.300,\;0.200,\;0.100]
+          \]
+        </div>
+      </section>
+
+      <section id="data">
+        <h2>05 · 数据系统：这篇论文真正厚的地方</h2>
+        <p>如果说架构决定上限，那么数据决定模型到底学到哪种世界。LingBot-Video 的数据部分不是简单地“收更多视频”，而是建立了一个可诊断、可重采样、可重写 prompt 的数据闭环。</p>
+
+        <figure class="figure-card">
+          <img src="lingbot_video_assets/data_profiling_engine.png" alt="Data Profiling Engine pipeline" loading="lazy" decoding="async" />
+          <figcaption>Data Profiling Engine：每个样本被投影到结构、语义、运动、相机/电影属性、质量/美学信号五个维度。后续过滤、采样、captioning 都围绕这些 profile 进行。</figcaption>
+        </figure>
+        <div class="read-figure">
+          <b>图里线索</b>
+          <p>profiling 的核心不是“给样本打标签”，而是让训练集变成可查询的数据库。模型在哪些语义节点 loss 高、哪些动作稀缺、哪些物理交互不够，都能回到 profile 上重新采样。</p>
+        </div>
+
+        <figure class="figure-card">
+          <img src="lingbot_video_assets/world_knowledge_graph.png" alt="World-Knowledge Topological Graph" loading="lazy" decoding="async" />
+          <figcaption>World-Knowledge Topological Graph：语义树包含 50,000 个叶子概念、1,000 个中间类别，再经 LLM-assisted Discover-Classify-Consolidate 合并成 25 个顶层视觉组；动作树覆盖数百个 canonical action nodes。</figcaption>
+        </figure>
+
+        <h3>Dense structured captions：把视频监督写成可执行的描述</h3>
+        <p>训练时，模型不是吃短 prompt，而是吃密集 JSON caption。图片 caption 描述整体、镜头、实体、位置、纹理、关系和世界知识；视频 caption 再加全局事件、相机运动和每个元素的 timestamped actions；VLA 与 egocentric 数据则把机械臂、夹爪、佩戴者双手当作 prominent elements 来写动作。</p>
+
+        <div class="code-card">
+          <div class="code-head"><span>caption 结构的简化形态</span><span>真实 schema 更长，重点是时间和实体对齐</span></div>
+          <pre><code>{
+  "comprehensive_description": "... scene, subjects, camera motion ...",
+  "camera": {
+    "shot_size": "medium-wide",
+    "shot_angle": "high-angle",
+    "light_quality": "hard daylight"
+  },
+  "prominent_elements": [
+    {
+      "name": "robotic gripper",
+      "location": "upper right",
+      "actions": [
+        {"time": "[0.0s, 1.2s]", "description": "moves downward toward the apple"},
+        {"time": "[1.2s, 2.4s]", "description": "closes around the apple and lifts it"}
+      ]
+    }
+  ]
+}</code></pre>
+        </div>
+
+        <p>这里的好处是 reward 和 rewriter 都能复用同一种结构。比如 text-video alignment reward 可以把 caption 里的实体、动作和时间窗口转成 temporal VQA；推理时 rewriter 也把用户短 prompt 映射回训练时见过的 JSON 格式，从而缩小 train-inference prompt gap。</p>
+
+        <h3>Caption Rewriter：不是润色 prompt，而是把用户语言映射回训练分布</h3>
+        <p>开源代码里的 <code>rewriter/rewriter_core.py</code> 很能说明这点。它分两步：第一步 Expand，用基础模型把用户短 prompt 扩成较紧凑的动作中心描述；第二步 Map，用 LoRA 版本把描述映射成结构化 JSON。作者特意限制第一步不要 hallucinate 过多低层属性，第二步再做 bounded completion。</p>
+
+        <div class="code-card">
+          <div class="code-head"><span>两阶段 rewriter</span><span>rewriter_core.py</span></div>
+          <pre><code>detailed = backend.generate(step1_expand(prompt, duration), image, use_lora=False)
+raw = backend.generate(step2_map(detailed, duration), image, use_lora=True)
+return {"mode": mode, "detailed": detailed, "json": parse_json(raw)}</code></pre>
+        </div>
+
+        <figure class="figure-card">
+          <img src="lingbot_video_assets/data_curriculum_flow.png" alt="Five-stage data curriculum" loading="lazy" decoding="async" />
+          <figcaption>五阶段数据课程：从 192p image-only，到低分辨率视频引入，再到 480p 多任务和挑战重采样，最后只保留极少量高质量 1080p 视频训练 refiner。</figcaption>
+        </figure>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>阶段</th>
+                <th>训练重点</th>
+                <th>为什么这样排</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Stage 1</td>
+                <td>192p image-only，建立单帧视觉先验。</td>
+                <td>先让 DiT 和 MoE router 在稳定静态任务上启动。</td>
+              </tr>
+              <tr>
+                <td>Stage 2</td>
+                <td>192p image + video，引入 70,000+ 小时具身相关视频。</td>
+                <td>开始学习时序、镜头运动、动作和机器人/第一视角数据。</td>
+              </tr>
+              <tr>
+                <td>Stage 3</td>
+                <td>480p，T2V + TI2V 多任务。</td>
+                <td>让模型学会首帧保持和未来帧预测。</td>
+              </tr>
+              <tr>
+                <td>Stage 4</td>
+                <td>480p challenge-focused rebalancing。</td>
+                <td>用知识图谱和训练反馈加强长尾动作、操作、物理接触。</td>
+              </tr>
+              <tr>
+                <td>Stage 5</td>
+                <td>1080p 高质量视频子集，远低于原始视频池 1%。</td>
+                <td>专门训练 refiner 的细节恢复能力。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="training">
+        <h2>06 · 后训练：把“好看”往“真实、可控、可执行”拉</h2>
+        <p>预训练给模型基础世界先验，但要让它少犯“慢动作、穿模、手部崩坏、动作缺失、物体凭空消失”这类错误，仅靠 diffusion loss 不够。LingBot-Video 在后训练里组合了 multi-aspect rewards、GRPO、RealNFT、A2V 和 distillation。</p>
+
+        <h3>多奖励：不用一个总分掩盖失败模式</h3>
+        <p>视频后训练最怕 reward 太粗。一个总分可能觉得视频“还不错”，但它可能同时有手指错位、目标物体消失、动作没发生。论文把 reward 拆成六类，每类盯一种失败模式，再在组内做归一化后合成 advantage。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Reward</th>
+                <th>主要惩罚什么</th>
+                <th>为什么与具身相关</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Vision quality</td>
+                <td>模糊、低清、artifact、整体视觉质量差。</td>
+                <td>保证基础可观察性，否则物理判断没有意义。</td>
+              </tr>
+              <tr>
+                <td>Text-video alignment</td>
+                <td>动作漏掉、实体错、时间顺序错。</td>
+                <td>用 temporal VQA 按实体和时间窗口验证动作。</td>
+              </tr>
+              <tr>
+                <td>Dynamic degree</td>
+                <td>视频像静态图片，运动不足。</td>
+                <td>机器人和物体交互必须真的发生状态变化。</td>
+              </tr>
+              <tr>
+                <td>Motion coherence</td>
+                <td>不自然慢动作、速度感错。</td>
+                <td>物理 rollout 需要接近真实 24fps 运动节奏。</td>
+              </tr>
+              <tr>
+                <td>Human-motion consistency</td>
+                <td>手、脸、肢体数量、透明身体、人体拓扑错误。</td>
+                <td>人机交互和第一视角场景高度依赖手部/人体合理性。</td>
+              </tr>
+              <tr>
+                <td>Physical plausibility</td>
+                <td>穿透、消失、无因运动、材料/刚体行为不合理。</td>
+                <td>这是从视频生成走向世界模型最核心的 reward。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="equation">
+          \[
+          \hat A^{(i)}
+          =
+          \sum_r
+          w_r
+          \frac{R_r(x_0^{(i)},c)-\mu_r}{\sigma_r+\delta}
+          \]
+          <p class="eq-note">\(\mu_r\)、\(\sigma_r\) 在同一个 prompt 的 rollout group 内按 reward 类型分别统计。</p>
+        </div>
+
+        <p>这个公式的重点是“分别归一化”。视觉质量 reward、动作对齐 reward、物理合理性 reward 的尺度不一样，如果直接相加，数值范围大的 reward 会支配训练。分别标准化后，模型看到的是“这一条样本在同组里相对好多少”，而不是某个 reward 原始分数有多大。</p>
+
+        <h3>GRPO：只让一个 denoising step 随机，解决 credit assignment</h3>
+        <p>普通视频 diffusion RL 的难点是轨迹长、token 多、reward 贵。如果每个 denoising step 都随机，再把整条轨迹的 reward 回传到所有 step，credit assignment 会很模糊。LingBot-Video 采用 group-shared single-step exploration：同一个 prompt 的一组 rollout 只在同一个采样步 <code>k</code> 注入随机性，其他步走确定性 ODE。这样组内差异更容易归因到那个 step。</p>
+
+        <div class="equation">
+          \[
+          c \rightarrow \{x_0^{(1)},\ldots,x_0^{(G)}\},
+          \qquad
+          k\sim \mathrm{Uniform}\{0,\ldots,N/2\}
+          \]
+          <p class="eq-note">同一个 prompt 生成 \(G\) 个 rollout，只在 \(t_k\to t_{k+1}\) 注入随机性，其他 denoising step 保持 deterministic ODE。</p>
+        </div>
+
+        <p>CPS 负责在第 <code>k</code> 步注入随机性，但又不破坏原本的噪声 schedule。模型在时间 \(t_i\) 预测 velocity \(\hat v_\theta\)，先得到 clean latent 和 noise latent 的估计：</p>
+
+        <div class="equation">
+          \[
+          \hat{x}_0 = x_{t_i}-t_i\hat{v}_\theta,
+          \qquad
+          \hat{\epsilon}=x_{t_i}+(1-t_i)\hat{v}_\theta
+          \]
+        </div>
+
+        <p>然后从 <code>t_i</code> 走到 <code>t_{i+1}</code>：</p>
+
+        <div class="equation">
+          \[
+          \begin{aligned}
+          x_{t_{i+1}} &= \mu_\theta+s_i\epsilon,\\
+          \mu_\theta
+          &=
+          (1-t_{i+1})\hat{x}_0
+          +
+          \sqrt{t_{i+1}^2-s_i^2}\,\hat{\epsilon},\\
+          s_i &= t_{i+1}\sin(\eta\pi/2)
+          \end{aligned}
+          \]
+          <p class="eq-note">论文实验取 \(\eta=0.7\)。</p>
+        </div>
+
+        <p>这组公式的直觉是：CPS 加了新噪声 <code>ε</code>，但总噪声系数仍等于 schedule 里要求的 <code>t_{i+1}</code>。因此 reward 看到的是正常干净的视频样本，不是被过量随机性污染的坏轨迹。对应的 transition log-likelihood 可以写成：</p>
+
+        <div class="equation">
+          \[
+          \log \pi_\theta(x_{t_{i+1}}\mid x_{t_i})
+          \propto
+          -\left\|x_{t_{i+1}}-\mu_\theta\right\|_2^2
+          \]
+        </div>
+
+        <p>不同 timestep 的梯度强度并不一样，论文再加一个 timestep-balanced weight。它先估计第 <code>k</code> 步的 transition gain：</p>
+
+        <div class="equation">
+          \[
+          \begin{aligned}
+          \kappa_k
+          &=
+          2s_k
+          \left|
+          \frac{\partial\mu_\theta}{\partial\hat v_\theta}
+          \right|,\\
+          \frac{\partial\mu_\theta}{\partial\hat v_\theta}
+          &=
+          (1-t_k)t_{k+1}\cos(\eta\pi/2)
+          -
+          t_k(1-t_{k+1}),\\
+          \lambda_k
+          &=
+          \frac{\kappa_k^{-1}}{\frac{1}{N}\sum_{j=0}^{N-1}\kappa_j^{-1}}
+          \end{aligned}
+          \]
+        </div>
+
+        <p>最后的 GRPO 目标就是用组内 advantage 去推高好样本那一步的 transition probability：</p>
+
+        <div class="equation">
+          \[
+          \mathcal{L}_{\mathrm{GRPO}}(\theta)
+          =
+          -\mathbb{E}
+          \left[
+          \lambda_k\hat A^{(i)}
+          \log\pi_\theta(x_{t_{k+1}}^{(i)}\mid x_{t_k}^{(i)})
+          \right]
+          \]
+        </div>
+
+        <p>论文这里的取舍很激进：strictly on-policy、每批 rollout 只消费一次、不使用 KL penalty、不使用 reference model，并且 fine-tune 全部模型参数。它省掉了语言 RLHF 里常见的 importance ratio 和 reference KL，但代价是对 rollout/reward/training 的工程同步要求很高。</p>
+
+        <h3>RealNFT：用真实视频当 chosen，生成视频当 rejected</h3>
+        <p>只靠 reward model 会有 reward hacking 风险。RealNFT 的做法是构造真实视频与当前模型生成视频的偏好对：真实 latent 是 chosen，生成 latent 是 rejected，二者加同一个噪声到同一个 timestep。优化时使用 active policy、EMA old policy、implicit positive/negative branches，并用 frozen base 做 KL 正则，避免策略漂移太远。</p>
+
+        <div class="equation">
+          \[
+          x_t^w=(1-t)x_0^w+t\epsilon,
+          \qquad
+          x_t^\ell=(1-t)x_0^\ell+t\epsilon
+          \]
+          <p class="eq-note">\(x_0^w\) 是真实视频 chosen latent，\(x_0^\ell\) 是模型生成的 rejected latent。</p>
+        </div>
+
+        <p>这里的 <code>w</code> 可以理解成 win/chosen，<code>l</code> 是 lose/rejected。两边用同一个 timestep 和同一个 noise，模型比较的是“同等扰动下，真实视频和生成视频应该往哪个 velocity 方向回去”。这样不需要把整条 denoising trajectory 存下来反传，训练负担比轨迹级 RL 小很多。</p>
+
+        <div class="equation">
+          \[
+          \begin{aligned}
+          \hat v_{\mathrm{pos}}
+          &=
+          \beta\hat v_\theta+(1-\beta)\hat v_{\mathrm{old}},\\
+          \hat v_{\mathrm{neg}}
+          &=
+          (1+\beta)\hat v_{\mathrm{old}}-\beta\hat v_\theta
+          \end{aligned}
+          \]
+          <p class="eq-note">\(\hat v_{\mathrm{old}}\) 来自 \(\theta\) 的 EMA copy。</p>
+        </div>
+
+        <p><code>v_pos</code> 是“往当前模型方向靠”的正分支，<code>v_neg</code> 是“从当前模型方向反推开”的负分支。真实视频用正分支拟合，生成视频则用负分支压制。论文把 DiffusionNFT 的 per-sample loss 写成：</p>
+
+        <div class="equation">
+          \[
+          \mathcal{L}_{\mathrm{NFT}}(r)
+          =
+          r\left\|\hat v_{\mathrm{pos}}-v\right\|_2^2
+          +
+          (1-r)\left\|\hat v_{\mathrm{neg}}-v\right\|_2^2,
+          \qquad
+          v=\epsilon-x_0
+          \]
+        </div>
+
+        <p>在 LingBot-Video 的 pairwise setting 里，真实视频取 <code>r=1</code>，生成视频为了避免额外 reward model 开销直接取 <code>r=0</code>。再用 frozen base model 做一个防漂移项：</p>
+
+        <div class="equation">
+          \[
+          \begin{aligned}
+          \mathcal{L}_{\mathrm{chosen}}
+          &=
+          \left\|\hat v_{\mathrm{pos}}^w-v^w\right\|_2^2,\\
+          \mathcal{L}_{\mathrm{reject}}
+          &=
+          \left\|\hat v_{\mathrm{neg}}^\ell-v^\ell\right\|_2^2,\\
+          \mathcal{L}_{\mathrm{KL}}
+          &=
+          \frac{1}{2}
+          \left(
+          \left\|\hat v_\theta^w-\hat v_{\mathrm{ref}}^w\right\|_2^2
+          +
+          \left\|\hat v_\theta^\ell-\hat v_{\mathrm{ref}}^\ell\right\|_2^2
+          \right),\\
+          \mathcal{L}_{\mathrm{RealNFT}}
+          &=
+          \mathcal{L}_{\mathrm{chosen}}
+          +
+          \mathcal{L}_{\mathrm{reject}}
+          +
+          \lambda_{\mathrm{KL}}\mathcal{L}_{\mathrm{KL}}
+          \end{aligned}
+          \]
+        </div>
+
+        <div class="figure-grid">
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/rl_improvement_general.png" alt="General quality improvements after post-training" loading="lazy" decoding="async" />
+            <figcaption>后训练前后 general quality 对比：手、肢体、文字、结构形变等问题被明显缓解。</figcaption>
+          </figure>
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/rl_improvement_embodied.png" alt="Embodied scenario improvements after post-training" loading="lazy" decoding="async" />
+            <figcaption>后训练前后 embodied scenarios 对比：夹爪、物体、接触、释放、重复物体等物理错误减少。</figcaption>
+          </figure>
+        </div>
+
+        <h3>A2V：从 prompt 描述未来，变成 action 驱动未来</h3>
+        <p>Action-to-Video 是这篇论文最接近“world model”的部分。普通 T2V/TI2V 里，prompt 已经描述了未来发生什么；A2V 则只让 prompt 描述初始状态，未来由机器人 action sequence 驱动。这才更像机器人规划中的 imagined rollout。</p>
+
+        <figure class="figure-card">
+          <img src="lingbot_video_assets/acwm.png" alt="Action-conditioned world model architecture" loading="lazy" decoding="async" />
+          <figcaption>A2V/ACWM 架构：动作先转成 relative actions，flatten 后经 <code>ActionEmbedder</code> 得到 action latents；在初始状态前 prepend zero action，使动作 latent 与视觉 latent 时间对齐，再注入 transformer blocks。</figcaption>
+        </figure>
+
+        <p>A2V 的关键不是多塞一个 action token，而是把监督目标改掉。caption 只写初始世界状态，后续视觉变化必须由动作序列解释；如果 prompt 泄露“接下来机械臂会把苹果放进盒子”，模型仍然可能只是在做文本到视频，而不是动作条件 rollout。</p>
+
+        <div class="equation">
+          \[
+          a_{\mathrm{raw}}
+          \rightarrow
+          a_{\mathrm{relative}}
+          \rightarrow
+          \operatorname{Flatten}
+          \rightarrow
+          \operatorname{ActionEmbedder}
+          \rightarrow
+          z_a
+          \]
+          \[
+          [z_0,z_1,\ldots,z_T]
+          \quad\leftrightarrow\quad
+          [a_0=\mathbf{0},a_1,\ldots,a_T]
+          \]
+        </div>
+
+        <p>论文还提到 <code>ActionEmbedder</code> 最后一层采用 zero initialization。这个细节很重要：刚开始训练时，动作分支几乎不扰动已经预训练好的视频 backbone；随着后训练进行，模型再逐步学会把 action residual 注入 transformer blocks。训练上，论文使用 Fourier GR-1 后训练数据，8k steps、global batch size 64、learning rate <code>1e-5</code>，并同时优化 <code>ActionEmbedder</code> 和完整 transformer，而不是只训一个轻量动作头。</p>
+
+        <figure class="figure-card">
+          <img src="lingbot_video_assets/acwm_eval.png" alt="A2V qualitative comparison on DreamDojo" loading="lazy" decoding="async" />
+          <figcaption>A2V 评测示例：论文展示其在 EgoDex/DreamDojo-HV 上相比 DreamDojo 更能保持物体、遵循动作和物理约束。</figcaption>
+        </figure>
+
+        <h3>为什么后训练系统必须单独做</h3>
+        <p>论文的基础设施章节给了一个很实际的解释：视频 RL 的中间状态不是文本 token，而是高维 video latent trajectory。单个训练样本约 100K tokens，中间 latent 和 per-step sampling statistics 可以到 GB 级别；30B MoE 还要做权重同步和专家并行。这也是为什么它把 rollout、reward evaluation、training 拆成不同执行角色，并用 service-oriented reward layer 处理多种 reward model、服务端解码和 batch 请求。</p>
+
+        <div class="equation">
+          rollout workers: 生成视频和关键 transition<br />
+          reward services: 解码视频，运行 VQA / HPS / motion / physics rewards<br />
+          training workers: 接收 transition-level data，计算 GRPO 或 RealNFT loss，更新模型
+        </div>
+      </section>
+
+      <section id="evaluation">
+        <h2>07 · 评测证据：强项集中在 TI2V、机器人和物理延续</h2>
+        <p>LingBot-Video 的评测分三层：内部 benchmark、公共 benchmark 和人评。理解这些结果时，最好不要只看平均分，而要看它在哪些任务上最强。</p>
+
+        <div class="figure-grid">
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/bench_t2v_quality.png" alt="T2V general quality internal benchmark" loading="lazy" decoding="async" />
+            <figcaption>T2V general quality：LingBot-Video 排在开源模型前列，但不是所有维度第一。</figcaption>
+          </figure>
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/bench_t2v_domain.png" alt="T2V embodied domain internal benchmark" loading="lazy" decoding="async" />
+            <figcaption>T2V embodied domain：即便没有首帧条件，具身相关场景仍优于 Cosmos 等开源基线。</figcaption>
+          </figure>
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/bench_ti2v_quality.png" alt="TI2V general quality internal benchmark" loading="lazy" decoding="async" />
+            <figcaption>TI2V general quality：首帧条件让模型更好保持外观和时序延续。</figcaption>
+          </figure>
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/bench_ti2v_domain.png" alt="TI2V embodied domain internal benchmark" loading="lazy" decoding="async" />
+            <figcaption>TI2V embodied domain：这是论文最有说服力的设置，因为机器人通常有当前观测帧。</figcaption>
+          </figure>
+        </div>
+
+        <h3>RBench 与 Physics-IQ Verified</h3>
+        <p>RBench 专门测机器人中心交互，包含 650 个 text-image prompts：250 个任务场景和 400 个 embodiment-specific 场景。LingBot-Video 平均分 <strong>0.620</strong>，超过 Cosmos3 Super 的 <strong>0.581</strong>，也超过多个开源基线；闭源 Wan 2.6 在部分子项仍很强，但平均分略低于 LingBot-Video。</p>
+
+        <div class="figure-grid">
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/rbench.png" alt="RBench average score bar chart" loading="lazy" decoding="async" />
+            <figcaption>RBench 平均分：LingBot-Video 在开源模型中领先，甚至略高于表中的 Wan 2.6 闭源平均。</figcaption>
+          </figure>
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/physics_iq.png" alt="Physics-IQ Verified I2V results" loading="lazy" decoding="async" />
+            <figcaption>Physics-IQ Verified I2V：LingBot-Video 得分 40.4，略高于 Cosmos3 的 39.5。</figcaption>
+          </figure>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>模型</th>
+                <th>RBench Avg.</th>
+                <th>Manip.</th>
+                <th>Long-hor.</th>
+                <th>Quadruped</th>
+                <th>Humanoid</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>LingBot-Video</td>
+                <td><strong>0.620</strong></td>
+                <td><strong>0.578</strong></td>
+                <td><strong>0.634</strong></td>
+                <td><strong>0.758</strong></td>
+                <td>0.689</td>
+              </tr>
+              <tr>
+                <td>Cosmos3 Super</td>
+                <td>0.581</td>
+                <td>0.487</td>
+                <td>0.591</td>
+                <td>0.739</td>
+                <td><strong>0.691</strong></td>
+              </tr>
+              <tr>
+                <td>Wan 2.2 A14B</td>
+                <td>0.507</td>
+                <td>0.381</td>
+                <td>0.501</td>
+                <td>0.690</td>
+                <td>0.648</td>
+              </tr>
+              <tr>
+                <td>HunyuanVideo 1.5</td>
+                <td>0.460</td>
+                <td>0.442</td>
+                <td>0.438</td>
+                <td>0.634</td>
+                <td>0.595</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>Physics-IQ Verified 更像“真实物理延续”测试：它基于 66 个受控物理实验，覆盖固体、流体、热、光学、磁学。论文评的是 I2V，即给一帧 switch frame 预测后续运动。这和 LingBot-Video 的 TI2V 强项非常一致。</p>
+
+        <h3>人评：T2V 接近强开源，TI2V 优势更稳定</h3>
+        <div class="figure-grid">
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/user_study_t2v.png" alt="Good-Same-Bad user study for T2V" loading="lazy" decoding="async" />
+            <figcaption>T2V GSB：对 Wan2.2 5B、LongCat、Wan2.2 A14B、LTX-2.3 等 Good 率高于 Bad；对 Cosmos/Hunyuan 更接近。</figcaption>
+          </figure>
+          <figure class="mini-fig">
+            <img src="lingbot_video_assets/user_study_ti2v.png" alt="Good-Same-Bad user study for TI2V" loading="lazy" decoding="async" />
+            <figcaption>TI2V GSB：对所有开源基线 Good 率高于 Bad，但仍落后部分更强商业模型。</figcaption>
+          </figure>
+        </div>
+
+        <div class="callout good">
+          <h3>怎么读这些结果</h3>
+          <p>这篇论文最强的证据链不是“通用 T2V 全面第一”，而是“在首帧条件、机器人交互、物理延续这些更接近具身使用方式的任务上更强”。这也和它的数据、caption、reward、A2V 设计是同一个方向。</p>
+        </div>
+
+        <figure class="figure-card tall">
+          <img src="lingbot_video_assets/cases_ti2v.png" alt="TI2V qualitative cases" loading="lazy" decoding="async" />
+          <figcaption>TI2V qualitative cases：每行是一个生成视频的关键帧序列，主要呈现首帧保持、动作推进、主体漂移和接触关系稳定性。</figcaption>
+        </figure>
+      </section>
+
+      <section id="code">
+        <h2>08 · 开源代码怎么落地：从 prompt 到视频的推理链路</h2>
+        <p><code>lingbot-video</code> 目录把运行模型需要的推理工程拆得比较清楚：structured prompt、pipeline、I2V 首帧约束、MoE backend、FSDP inference、SGLang fallback、refiner 串联。</p>
+
+        <div class="flow">
+          <div class="node"><b>Prompt</b>用户短 prompt 或首帧 + prompt。</div>
+          <div class="node"><b>Rewriter</b>Expand 再 Map，输出 <code>{"caption", "duration"}</code>。</div>
+          <div class="node"><b>Pipeline</b>Qwen3-VL 编码条件，准备 latent 与 timesteps。</div>
+          <div class="node"><b>DiT/MoE</b>single-stream transformer 逐步预测 velocity。</div>
+          <div class="node"><b>Refiner</b>可选 480p 到 1080p，再保存 mp4。</div>
+        </div>
+
+        <h3>runner 入口：为什么 README 强调 prompt_json</h3>
+        <p><code>docs/zh/dit_inference.md</code> 里明确提醒：DiT 推理不直接吃原始自然语言 prompt，必须先用 rewriter 生成结构化 JSON，再通过 <code>--prompt_json</code> 传入。这与论文训练时使用 dense structured captions 是一致的。</p>
+
+        <div class="code-card">
+          <div class="code-head"><span>典型推理命令</span><span>README / docs 中的运行逻辑</span></div>
+          <pre><code>python rewriter/inference.py \
+  --prompt "a robotic arm picks up an apple from a table" \
+  --mode t2v --duration 5 --output prompt.json
+
+python rewriter/auto_negative.py \
+  --mode t2v --prompt_json prompt.json --output negative.json
+
+python scripts/inference.py \
+  --task t2v --model_type moe --backend diffusers \
+  --prompt_json prompt.json --negative_prompt_json negative.json</code></pre>
+        </div>
+
+        <h3>TI2V：首帧条件被用两次</h3>
+        <p><code>pipeline_lingbot_video_i2v.py</code> 的设计很直观：输入图像一方面给 Qwen3-VL 作为视觉条件，另一方面被 VAE 编成 clean latent prefix，然后在 denoising 前后反复通过 <code>_apply_inpainting</code> 写回 latent。这样首帧不仅是语义提示，也是硬约束。</p>
+
+        <div class="code-card">
+          <div class="code-head"><span>TI2V 首帧锁定</span><span>pipeline_lingbot_video_i2v.py</span></div>
+          <pre><code>cond_latent = self.encode_image_latent(image)
+latents = self.prepare_latents(...)
+latents = self._apply_inpainting(latents, cond_latent)
+
+for t in timesteps:
+    noise_pred = self.transformer(...)
+    latents = self.scheduler.step(noise_pred, t, latents).prev_sample
+    latents = self._apply_inpainting(latents, cond_latent)</code></pre>
+        </div>
+
+        <h3>MoE backend：质量优先、速度优先和多卡切分</h3>
+        <p>MoE expert backend 通过环境变量选择：默认 <code>LINGBOT_MOE_EXPERT_BACKEND=grouped_mm</code>，也支持 <code>sglang_triton</code> 和 <code>sglang_triton_fp8</code>。文档里也说得比较直接：FP8 路径更偏速度，但可能改变相对 grouped MoE 的生成细节；更关注 fidelity 时用默认 grouped experts。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>文件</th>
+                <th>最值得读什么</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>transformer_lingbot_video.py</code></td>
+                <td>patchify、joint sequence、3D RoPE、QK-Norm、AdaLN、Sparse MoE router、grouped/SGLang expert backend。</td>
+              </tr>
+              <tr>
+                <td><code>pipeline_lingbot_video.py</code></td>
+                <td>T2V/T2I pipeline、prompt encoding、latent shape、CFG、scheduler loop、VAE decode。</td>
+              </tr>
+              <tr>
+                <td><code>pipeline_lingbot_video_i2v.py</code></td>
+                <td>首帧同时进入 VLM 条件和 clean latent prefix，denoising 中持续 inpainting。</td>
+              </tr>
+              <tr>
+                <td><code>runner.py</code></td>
+                <td>prompt_json 读取、resolution bucket、frames 计算、base/refiner 串联、多 GPU 参数。</td>
+              </tr>
+              <tr>
+                <td><code>fsdp_inference.py</code></td>
+                <td>按 block shard transformer，并保留 fp32 sensitive parameters。</td>
+              </tr>
+              <tr>
+                <td><code>sglang_moe_shim.py</code></td>
+                <td>SGLang fused experts 与 FP8 quantization shim。</td>
+              </tr>
+              <tr>
+                <td><code>rewriter/</code></td>
+                <td>两阶段 prompt rewrite、LoRA adapter 切换、auto-negative 删除式筛选。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="critique">
+        <h2>09 · 优缺点与后续研究方向</h2>
+
+        <h3>我认为最强的地方</h3>
+        <p>第一，系统设计很完整。很多视频论文会在“世界模型”这个词上停留得比较抽象，而 LingBot-Video 把数据、caption、reward、A2V 和 serving 都串成了同一个问题：怎样让视频模型学会可控的物理延续。</p>
+        <p>第二，MoE 与视频长序列的矛盾匹配得很好。视频需要大容量保存复杂世界先验，但每个 denoising step 又极贵；Sparse MoE 正好提供容量-计算解耦。论文也没有只讲概念，而是给了 active-comparable scaling 和 1M token latency。</p>
+        <p>第三，开源推理代码能看到关键工程选择：router bias 不进入 gate weight、group-limited top-K、TI2V 首帧 latent 锁定、refiner 串联、FSDP inference 与 SGLang/FP8 backend。这些比抽象架构图更能说明模型如何被实际跑起来。</p>
+
+        <h3>需要保留的疑问</h3>
+        <ul class="plain-list">
+          <li><strong>专家是否真的专业化：</strong>论文证明 MoE 有效，但没有充分展开 expert routing 的可解释性，比如哪些专家负责机器人、手部、低噪声细节或高噪声布局。</li>
+          <li><strong>reward model 的偏差：</strong>六类 reward 很全面，但 VLM/VQA 评估仍可能偏向可见表象，物理 reward 是否能覆盖长时因果仍需更多验证。</li>
+          <li><strong>A2V 泛化边界：</strong>8k steps 的 GR-1 后训练展示了方向，但要成为机器人规划中的 reliable simulator，还需要更严格的闭环控制、误差累积和多步规划评测。</li>
+          <li><strong>开源复现距离：</strong>推理代码较完整，但训练数据、profiling、后训练基础设施未完整公开，研究者难以复现最关键的数据/后训练系统。</li>
+          <li><strong>商业模型对比：</strong>人评里 TI2V 对开源优势明显，但对强商业模型仍落后，说明视觉质量和通用偏好并未被完全解决。</li>
+        </ul>
+
+        <h3>后续可以怎么做</h3>
+        <p>一个直接方向是做 MoE interpretability：统计 expert usage 与任务、动作、噪声 timestep、空间区域的关系，看专家是否形成“物理/机器人/手部/纹理/文字”等功能分工。第二个方向是把 A2V 接入真实机器人规划环路，用 action rollout 的预测误差而不是视频相似度来评价。第三个方向是建立更强的 physics-grounded reward，结合可追踪物体状态、接触事件、3D 几何和可微/不可微物理检查，而不只依赖 VLM 判分。</p>
+
+        <figure class="figure-card tall">
+          <img src="lingbot_video_assets/cases_t2v.png" alt="T2V qualitative cases" loading="lazy" decoding="async" />
+          <figcaption>T2V qualitative cases：通用生成能力仍重要，因为具身视频模型不能只会机器人场景。论文的路线是在保留通用质量的同时，把训练重心向动作、物理和观察延续倾斜。</figcaption>
+        </figure>
+
+        <div class="ending">
+          <h2>最后记住这条线</h2>
+          <p>LingBot-Video 的价值不是某个 isolated trick，而是一条连贯的工程链：single-stream DiT 统一任务，Sparse MoE 扩容量，structured data 补动作和物理，multi-reward post-training 修正失败模式，A2V 把视频生成推进到动作条件世界模拟，最后用 refiner 和 serving backend 把模型跑到可用分辨率和速度。</p>
+          <p>如果只用一句话概括：它试图把“会生成视频的模型”改造成“能在视觉空间里想象未来的模型”。</p>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button type="button" aria-label="Close image preview">×</button>
+    <img alt="" />
+  </div>
+
+  <script>
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImage = lightbox.querySelector("img");
+    const closeButton = lightbox.querySelector("button");
+
+    document.querySelectorAll(".figure-card img, .mini-fig img").forEach((image) => {
+      image.addEventListener("click", () => {
+        lightboxImage.src = image.src;
+        lightboxImage.alt = image.alt || "";
+        lightbox.classList.add("open");
+        lightbox.setAttribute("aria-hidden", "false");
+      });
+    });
+
+    function closeLightbox() {
+      lightbox.classList.remove("open");
+      lightbox.setAttribute("aria-hidden", "true");
+      lightboxImage.src = "";
+    }
+
+    closeButton.addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) closeLightbox();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && lightbox.classList.contains("open")) closeLightbox();
+    });
+  </script>
+</body>
+</html>

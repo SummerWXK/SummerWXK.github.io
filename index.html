@@ -74,6 +74,92 @@
         top: 0;
         white-space: nowrap;
     }
+
+    .blog-module {
+        margin-top: 10px;
+    }
+
+    .blog-lead {
+        color: #555;
+        font-size: 0.95em;
+        line-height: 1.65;
+        margin: 0 0 18px;
+    }
+
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+        margin: 8px 0 20px;
+    }
+
+    .blog-card {
+        display: block;
+        color: #222;
+        background: #fff;
+        border: 1px solid #e4ddd6;
+        border-left: 4px solid #9b3022;
+        border-radius: 10px;
+        padding: 18px 20px;
+        box-shadow: 0 12px 30px rgba(60, 45, 35, 0.08);
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .blog-card:visited {
+        color: #222;
+    }
+
+    .blog-card:hover {
+        color: #111;
+        text-decoration: none;
+        transform: translateY(-3px);
+        border-color: #b84b3c;
+        box-shadow: 0 18px 38px rgba(60, 45, 35, 0.13);
+    }
+
+    .blog-card-title {
+        font-size: 1.08em;
+        font-weight: 600;
+        line-height: 1.35;
+        margin-bottom: 9px;
+    }
+
+    .blog-card-meta {
+        color: #9b3022;
+        font-size: 0.78em;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 9px;
+    }
+
+    .blog-card-desc {
+        color: #555;
+        font-size: 0.9em;
+        line-height: 1.62;
+        margin-bottom: 12px;
+    }
+
+    .blog-card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .blog-card-tags span {
+        color: #5e514a;
+        background: #f6eee9;
+        border: 1px solid #ead8ce;
+        border-radius: 999px;
+        font-size: 0.76em;
+        padding: 3px 8px;
+    }
+
+    @media (max-width: 640px) {
+        .blog-grid {
+            grid-template-columns: 1fr;
+        }
+    }
   </style>
   
 
@@ -105,6 +191,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a class="page-link" href="#timeline"><b>Experiences</b></a>
     <a class="page-link" href="#news"><b>News</b></a>
     <a class="page-link" href="#publications"><b>Publications</b></a>
+    <a class="page-link" href="#blog"><b>Blog</b></a>
     <a class="page-link" href="#codebase"><b>GitHub</b></a>
     <a class="page-link" href="#awards"><b>Honors & Awards</b></a>
     <a class="page-link" href="#academicservices"><b>Academic Services </b></a>
@@ -577,6 +664,30 @@ I'm always looking for related colaboration. If you are interested to chat with 
 
     
 
+  </div>
+</div>
+
+<div id="blog" class="bio blog-module">
+  <h1 class="md-heading text-left">
+    <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+    Blog
+  </h1>
+  <p class="blog-lead">
+    Selected paper-reading notes and long-form technical explainers. I keep this section for papers whose ideas, figures, and code are worth revisiting.
+  </p>
+  <div class="blog-grid">
+    <a class="blog-card" href="blogs/lingbot_video_moe_guide.html" target="_blank">
+      <div class="blog-card-meta">Video World Model · MoE · Embodied AI</div>
+      <div class="blog-card-title">LingBot-Video：视频生成模型如何变成具身世界模拟器</div>
+      <div class="blog-card-desc">
+        A deep reading of LingBot-Video, covering single-stream DiT, sparse MoE routing, refiner, data curriculum, post-training, and code-level inference details.
+      </div>
+      <div class="blog-card-tags">
+        <span>Paper Guide</span>
+        <span>Mixture-of-Experts</span>
+        <span>Action-to-Video</span>
+      </div>
+    </a>
   </div>
 </div>
 </div>
