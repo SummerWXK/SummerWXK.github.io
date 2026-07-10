@@ -2481,13 +2481,14 @@ div.paginate-container li:nth-last-child(2) a:after {
 
 .blog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
     margin: 8px 0 20px
 }
 
 .blog-card {
-    display: block;
+    display: flex;
+    flex-direction: column;
     color: #222;
     background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 247, 242, 0.92)),
@@ -2540,7 +2541,8 @@ div.paginate-container li:nth-last-child(2) a:after {
 .blog-card-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px
+    gap: 6px;
+    margin-top: auto
 }
 
 .blog-card-tags span {
