@@ -1,0 +1,3364 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="LingBot-VA 2.0 深度解读：从语义视觉-动作 tokenizer、原生因果 DiT、稀疏 MoE、MCP、人机共训练，到 Foresight Reasoning 与真实机器人实验。" />
+  <meta name="theme-color" content="#173b38" />
+  <meta property="og:title" content="LingBot-VA 2.0：为机器人闭环控制原生训练视频-动作模型" />
+  <meta property="og:description" content="完整梳理 Native Video-Action Pretraining for Generalizable Robot Control 的问题脉络、方法、公式、数据、实验与研究边界。" />
+  <meta property="og:type" content="article" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23173b38'/%3E%3Cpath d='M18 22h28v24H18zM25 15h14v7H25z' fill='%23f3efe5'/%3E%3Ccircle cx='27' cy='33' r='3' fill='%23e26838'/%3E%3Ccircle cx='37' cy='33' r='3' fill='%23e26838'/%3E%3Cpath d='M25 40h14' stroke='%23173b38' stroke-width='3'/%3E%3C/svg%3E" />
+  <title>LingBot-VA 2.0：为机器人闭环控制原生训练视频-动作模型</title>
+  <style>
+    :root {
+      --paper: #f3efe5;
+      --paper-2: #e9e3d6;
+      --paper-3: #fffdf8;
+      --ink: #172421;
+      --muted: #5d6863;
+      --line: #cfc7b8;
+      --line-dark: #9e9a8d;
+      --teal: #173b38;
+      --teal-2: #286a68;
+      --teal-soft: #dce9e5;
+      --cyan: #79bfc0;
+      --orange: #e26838;
+      --orange-soft: #f4ddcf;
+      --mustard: #c89b37;
+      --plum: #66576d;
+      --shadow: 0 18px 55px rgba(27, 42, 37, 0.10);
+      --shadow-soft: 0 10px 28px rgba(27, 42, 37, 0.07);
+      --serif: "Iowan Old Style", "Baskerville", "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", serif;
+      --sans: "Avenir Next", "Gill Sans", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+      --mono: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", "Menlo", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(23, 59, 56, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23, 59, 56, 0.025) 1px, transparent 1px),
+        radial-gradient(circle at 84% 8%, rgba(226, 104, 56, 0.08), transparent 25rem),
+        var(--paper);
+      background-size: 34px 34px, 34px 34px, auto, auto;
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.82;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      z-index: 100;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");
+      mix-blend-mode: multiply;
+    }
+
+    a {
+      color: var(--teal-2);
+      text-decoration-color: rgba(40, 106, 104, 0.38);
+      text-underline-offset: 0.18em;
+    }
+
+    a:hover {
+      color: var(--orange);
+      text-decoration-color: currentColor;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    button,
+    summary {
+      font: inherit;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--orange);
+      outline-offset: 4px;
+    }
+
+    #reading-progress {
+      position: fixed;
+      inset: 0 auto auto 0;
+      width: 0;
+      height: 5px;
+      z-index: 120;
+      background: linear-gradient(90deg, var(--orange), #efb341);
+      box-shadow: 0 1px 8px rgba(226, 104, 56, 0.38);
+    }
+
+    .hero {
+      min-height: 92vh;
+      display: grid;
+      align-items: end;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      color: #fffaf0;
+      background: var(--teal);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+      background-image: url("lingbot_va2_assets/official/hero_poster.png");
+      background-size: cover;
+      background-position: center 48%;
+      filter: saturate(0.82) contrast(1.05);
+      transform: scale(1.015);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background:
+        linear-gradient(90deg, rgba(8, 29, 28, 0.96) 0%, rgba(12, 38, 36, 0.86) 42%, rgba(12, 38, 36, 0.40) 73%, rgba(12, 38, 36, 0.16) 100%),
+        linear-gradient(0deg, rgba(7, 24, 23, 0.98) 0%, transparent 50%);
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.20;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+      background-size: 62px 62px;
+      mask-image: linear-gradient(90deg, black, transparent 85%);
+    }
+
+    .hero-inner {
+      width: min(1380px, calc(100% - 64px));
+      margin: 0 auto;
+      padding: 110px 0 58px;
+    }
+
+    .eyebrow {
+      margin: 0 0 22px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #b7d9d1;
+    }
+
+    .hero h1 {
+      margin: 0;
+      max-width: 960px;
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: clamp(46px, 6.6vw, 104px);
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+      text-shadow: 0 5px 28px rgba(0, 0, 0, 0.22);
+    }
+
+    .hero h1 em {
+      display: block;
+      margin-top: 0.14em;
+      color: #f2a16e;
+      font-style: normal;
+      font-size: 0.76em;
+      letter-spacing: -0.035em;
+    }
+
+    .hero-subtitle {
+      max-width: 760px;
+      margin: 30px 0 0;
+      color: #dce8e3;
+      font-size: clamp(19px, 1.7vw, 27px);
+      line-height: 1.55;
+      text-wrap: pretty;
+    }
+
+    .hero-loop {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      max-width: 980px;
+      margin-top: 42px;
+      border-top: 1px solid rgba(255, 255, 255, 0.34);
+    }
+
+    .loop-step {
+      position: relative;
+      padding: 15px 24px 0 0;
+      min-height: 75px;
+      font-family: var(--sans);
+      color: #d8e8e2;
+      font-size: 13px;
+      line-height: 1.38;
+    }
+
+    .loop-step::before {
+      content: "";
+      position: absolute;
+      top: -6px;
+      left: 0;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 0 5px rgba(226, 104, 56, 0.22);
+    }
+
+    .loop-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: 14px;
+      top: 16px;
+      color: #efad7f;
+      font-size: 18px;
+    }
+
+    .loop-step b {
+      display: block;
+      margin-bottom: 4px;
+      color: #fff8e9;
+      font-size: 14px;
+      letter-spacing: 0.03em;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 22px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #cfe2dc;
+    }
+
+    .hero-meta span {
+      padding: 7px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(6, 22, 21, 0.32);
+      backdrop-filter: blur(8px);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 960px);
+      gap: clamp(44px, 6vw, 96px);
+      align-items: start;
+      width: min(1320px, calc(100% - 64px));
+      margin: 0 auto;
+      padding: 76px 0 120px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 28px;
+      max-height: calc(100vh - 56px);
+      overflow: auto;
+      padding: 22px 20px 20px;
+      border: 1px solid var(--line);
+      background: rgba(243, 239, 229, 0.88);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(14px);
+    }
+
+    .toc-title {
+      margin: 0 0 13px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .toc a {
+      display: block;
+      position: relative;
+      margin: 0 -8px;
+      padding: 7px 9px 7px 14px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.32;
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    .toc a:hover,
+    .toc a[aria-current="true"] {
+      color: var(--ink);
+      border-left-color: var(--orange);
+      background: rgba(226, 104, 56, 0.07);
+    }
+
+    .mobile-toc {
+      display: none;
+    }
+
+    article {
+      min-width: 0;
+    }
+
+    .credit {
+      margin-bottom: 64px;
+      padding: 22px 24px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--teal);
+      background: rgba(255, 253, 248, 0.76);
+      box-shadow: var(--shadow-soft);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+
+    .credit p {
+      margin: 0;
+    }
+
+    .credit p + p {
+      margin-top: 6px;
+    }
+
+    .credit strong {
+      color: var(--ink);
+    }
+
+    section {
+      scroll-margin-top: 36px;
+      margin-bottom: 98px;
+    }
+
+    section > p,
+    section > ul,
+    section > ol,
+    section > .prose-width,
+    section > h3,
+    section > h4 {
+      max-width: 76ch;
+    }
+
+    h2 {
+      margin: 0 0 30px;
+      padding-top: 12px;
+      border-top: 5px solid var(--ink);
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: clamp(31px, 3.5vw, 52px);
+      line-height: 1.14;
+      letter-spacing: -0.035em;
+      text-wrap: balance;
+    }
+
+    h2 .sec-no {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+    }
+
+    h3 {
+      margin: 46px 0 17px;
+      font-family: var(--sans);
+      font-size: 24px;
+      line-height: 1.35;
+      letter-spacing: -0.02em;
+    }
+
+    h4 {
+      margin: 30px 0 12px;
+      font-family: var(--sans);
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    p {
+      margin: 0 0 1.12em;
+    }
+
+    .lead {
+      margin-bottom: 1.4em;
+      color: #263a35;
+      font-size: 23px;
+      line-height: 1.7;
+    }
+
+    .kicker {
+      color: var(--teal-2);
+      font-family: var(--sans);
+      font-weight: 650;
+    }
+
+    code,
+    .mono {
+      font-family: var(--mono);
+      font-size: 0.9em;
+    }
+
+    code {
+      padding: 0.08em 0.35em;
+      border-radius: 3px;
+      color: #234f4b;
+      background: var(--teal-soft);
+    }
+
+    .tldr {
+      padding: 34px;
+      border: 1px solid #9db7ad;
+      background:
+        linear-gradient(135deg, rgba(121, 191, 192, 0.12), transparent 44%),
+        var(--paper-3);
+      box-shadow: var(--shadow);
+    }
+
+    .tldr h2 {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .thesis-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      counter-reset: thesis;
+    }
+
+    .thesis-list li {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .thesis-list li::before {
+      counter-increment: thesis;
+      content: "0" counter(thesis);
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding-top: 6px;
+    }
+
+    .thesis-list strong {
+      color: var(--teal);
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      margin: 36px 0 10px;
+      border: 1px solid var(--line-dark);
+      background: var(--paper-3);
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 20px 16px;
+      border-right: 1px solid var(--line);
+    }
+
+    .metric:last-child {
+      border-right: 0;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--teal);
+      font-family: var(--sans);
+      font-size: clamp(21px, 2.3vw, 32px);
+      line-height: 1;
+      letter-spacing: -0.045em;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .figure {
+      width: 100%;
+      margin: 42px 0 45px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .figure.wide {
+      margin-left: 0;
+    }
+
+    .figure img {
+      display: block;
+      width: 100%;
+      background: #fff;
+      cursor: zoom-in;
+    }
+
+    .figure figcaption {
+      padding: 13px 8px 4px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.58;
+    }
+
+    .source-tag {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 6px;
+      color: #fff;
+      background: var(--teal);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      vertical-align: 0.1em;
+    }
+
+    .source-tag.official {
+      background: var(--plum);
+    }
+
+    .read-figure {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 22px;
+      margin: -22px 0 42px;
+      padding: 22px 24px;
+      border-left: 4px solid var(--orange);
+      background: rgba(244, 221, 207, 0.55);
+    }
+
+    .read-figure b {
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .read-figure p {
+      margin: 0;
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .callout {
+      margin: 32px 0;
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      background: var(--paper-3);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .callout h3,
+    .callout h4 {
+      margin-top: 0;
+    }
+
+    .callout p:last-child,
+    .callout ul:last-child {
+      margin-bottom: 0;
+    }
+
+    .callout.insight {
+      border-left: 6px solid var(--teal-2);
+      background: linear-gradient(90deg, rgba(121, 191, 192, 0.14), transparent 58%), var(--paper-3);
+    }
+
+    .callout.warning {
+      border-left: 6px solid var(--orange);
+      background: linear-gradient(90deg, rgba(226, 104, 56, 0.12), transparent 58%), var(--paper-3);
+    }
+
+    .callout.audit {
+      border: 1px dashed var(--orange);
+      background: #fff8ed;
+    }
+
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 30px 0;
+    }
+
+    .concept {
+      min-height: 180px;
+      padding: 21px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 248, 0.74);
+    }
+
+    .concept .label {
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .concept h3 {
+      margin: 13px 0 8px;
+      font-size: 19px;
+    }
+
+    .concept p {
+      margin: 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .lineage {
+      position: relative;
+      margin: 36px 0 44px;
+      padding-left: 30px;
+    }
+
+    .lineage::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: linear-gradient(var(--teal-2), var(--orange));
+    }
+
+    .lineage-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 20px;
+      padding: 0 0 28px;
+    }
+
+    .lineage-item::before {
+      content: "";
+      position: absolute;
+      left: -28px;
+      top: 8px;
+      width: 11px;
+      height: 11px;
+      border: 3px solid var(--paper);
+      border-radius: 50%;
+      background: var(--teal-2);
+      box-shadow: 0 0 0 1px var(--teal-2);
+    }
+
+    .lineage-item:last-child::before {
+      background: var(--orange);
+      box-shadow: 0 0 0 1px var(--orange);
+    }
+
+    .lineage-era {
+      color: var(--teal);
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.5;
+      letter-spacing: 0.06em;
+    }
+
+    .lineage-copy b {
+      display: block;
+      margin-bottom: 4px;
+      font-family: var(--sans);
+      font-size: 17px;
+    }
+
+    .lineage-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .equation {
+      margin: 28px 0;
+      padding: 22px 25px;
+      overflow-x: auto;
+      border: 1px solid #a7bcb4;
+      border-left: 6px solid var(--teal-2);
+      background: #fbfcf8;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .eq-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .eq-no {
+      flex: 0 0 auto;
+      color: var(--orange);
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    .math {
+      min-width: max-content;
+      color: #17322f;
+      font-family: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+      font-size: clamp(18px, 2.2vw, 25px);
+      line-height: 1.75;
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+
+    .math.small {
+      font-size: clamp(15px, 1.8vw, 20px);
+      line-height: 1.85;
+    }
+
+    .eq-note {
+      margin-top: 12px;
+      padding-top: 11px;
+      border-top: 1px solid #d6e0dc;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 22px;
+      margin: 34px 0;
+    }
+
+    .flow-node {
+      position: relative;
+      min-height: 132px;
+      padding: 18px 15px;
+      border: 1px solid var(--line-dark);
+      background: var(--paper-3);
+      box-shadow: var(--shadow-soft);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .flow-node:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -19px;
+      top: 48px;
+      color: var(--orange);
+      font-size: 22px;
+    }
+
+    .flow-node b {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--teal);
+      font-size: 15px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      margin: 32px 0 40px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      background: var(--paper-3);
+      box-shadow: var(--shadow-soft);
+    }
+
+    table.data {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    table.data caption {
+      padding: 15px 16px;
+      color: var(--muted);
+      text-align: left;
+      font-family: var(--serif);
+      font-size: 14px;
+      font-style: italic;
+    }
+
+    table.data th,
+    table.data td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #ddd7ca;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    table.data th {
+      color: #fff;
+      background: var(--teal);
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    table.data tbody tr:nth-child(even) {
+      background: rgba(23, 59, 56, 0.035);
+    }
+
+    table.data tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    table.data .best {
+      color: var(--teal-2);
+      font-weight: 750;
+    }
+
+    table.data .warn {
+      color: var(--orange);
+      font-weight: 700;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 30px 0;
+    }
+
+    .compare-card {
+      padding: 24px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 248, 0.76);
+    }
+
+    .compare-card h3 {
+      margin: 0 0 11px;
+      font-size: 20px;
+    }
+
+    .compare-card ul {
+      margin: 0;
+      padding-left: 1.15em;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .compare-card.good {
+      border-top: 6px solid var(--teal-2);
+    }
+
+    .compare-card.risk {
+      border-top: 6px solid var(--orange);
+    }
+
+    .plain-list {
+      padding-left: 1.2em;
+    }
+
+    .plain-list li {
+      margin-bottom: 0.72em;
+    }
+
+    .schema {
+      margin: 28px 0 38px;
+      border: 1px solid var(--line-dark);
+      background: #132f2d;
+      color: #e7f2ee;
+      box-shadow: var(--shadow);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .schema-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      color: #9ccbc1;
+      font-size: 10px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .schema-grid {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+    }
+
+    .schema-key,
+    .schema-value {
+      padding: 13px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .schema-key {
+      color: #efaa7c;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .schema-value {
+      color: #d9e7e2;
+      font-family: var(--sans);
+    }
+
+    .schema-grid > :nth-last-child(-n + 2) {
+      border-bottom: 0;
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      margin: 32px 0 40px;
+    }
+
+    .arch-card {
+      position: relative;
+      min-height: 270px;
+      padding: 25px;
+      overflow: hidden;
+      border: 1px solid var(--line-dark);
+      background: var(--paper-3);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .arch-card::after {
+      content: attr(data-watermark);
+      position: absolute;
+      right: -12px;
+      bottom: -34px;
+      color: rgba(23, 59, 56, 0.05);
+      font-family: var(--sans);
+      font-size: 102px;
+      font-weight: 800;
+      letter-spacing: -0.08em;
+      pointer-events: none;
+    }
+
+    .arch-card h3 {
+      margin: 0 0 18px;
+      font-size: 21px;
+    }
+
+    .arch-card p {
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .expert-dots {
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      gap: 5px;
+      margin: 23px 0;
+    }
+
+    .expert-dots i {
+      aspect-ratio: 1;
+      border-radius: 2px;
+      background: #d5ddd8;
+    }
+
+    .expert-dots i:nth-child(3n + 1) {
+      background: #c8d9d3;
+    }
+
+    .expert-dots i.active {
+      background: var(--orange);
+      box-shadow: 0 0 0 2px rgba(226, 104, 56, 0.18);
+    }
+
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 32px 0;
+      border-top: 1px solid var(--line-dark);
+      border-left: 1px solid var(--line-dark);
+    }
+
+    .spec {
+      min-height: 112px;
+      padding: 16px;
+      border-right: 1px solid var(--line-dark);
+      border-bottom: 1px solid var(--line-dark);
+      background: rgba(255, 253, 248, 0.72);
+    }
+
+    .spec b {
+      display: block;
+      color: var(--teal);
+      font-family: var(--sans);
+      font-size: 19px;
+      line-height: 1.2;
+    }
+
+    .spec span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .training-schedule {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin: 30px 0 42px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 248, 0.72);
+    }
+
+    .schedule-stage {
+      position: relative;
+      min-height: 155px;
+      padding: 16px 13px;
+      color: #f7f2e8;
+      background: var(--teal);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .schedule-stage:nth-child(2) {
+      background: #205551;
+    }
+
+    .schedule-stage:nth-child(3) {
+      background: #36716c;
+    }
+
+    .schedule-stage:nth-child(4) {
+      background: #9b7041;
+    }
+
+    .schedule-stage:nth-child(5) {
+      background: var(--orange);
+    }
+
+    .schedule-stage b {
+      display: block;
+      margin-bottom: 8px;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    .schedule-stage small {
+      display: block;
+      margin-top: 10px;
+      opacity: 0.78;
+    }
+
+    .stack {
+      margin: 32px 0 42px;
+      counter-reset: stack;
+    }
+
+    .stack-layer {
+      display: grid;
+      grid-template-columns: 84px 1fr 150px;
+      gap: 18px;
+      align-items: center;
+      margin-top: -1px;
+      padding: 20px 22px;
+      border: 1px solid var(--line-dark);
+      background: var(--paper-3);
+    }
+
+    .stack-layer::before {
+      counter-increment: stack;
+      content: "L" counter(stack);
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .stack-layer b {
+      display: block;
+      font-family: var(--sans);
+      font-size: 17px;
+    }
+
+    .stack-layer p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .stack-gain {
+      color: var(--teal-2);
+      font-family: var(--mono);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 32px 0 42px;
+    }
+
+    .data-card {
+      padding: 25px;
+      border: 1px solid var(--line);
+      background: var(--paper-3);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .data-card .data-type {
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .data-card h3 {
+      margin: 12px 0 9px;
+      font-size: 21px;
+    }
+
+    .data-card p {
+      margin: 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 32px 0 42px;
+    }
+
+    .gallery-card {
+      margin: 0;
+      padding: 7px;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .gallery-card img {
+      display: block;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      cursor: zoom-in;
+    }
+
+    .gallery-card figcaption {
+      padding: 9px 5px 4px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .rate-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 30px 0 42px;
+    }
+
+    .rate-card {
+      padding: 24px;
+      border: 1px solid var(--line-dark);
+      background: var(--paper-3);
+    }
+
+    .rate-card b {
+      display: block;
+      color: var(--teal);
+      font-family: var(--sans);
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .rate-card span {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .rate-card.derived {
+      border-color: #d18a68;
+      background: #fff8ed;
+    }
+
+    .micro-note {
+      margin-top: -18px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 32px 0 42px;
+    }
+
+    .result-card {
+      padding: 24px;
+      border: 1px solid var(--line-dark);
+      background: var(--paper-3);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .result-card h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .result-card > p {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 15px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 132px 1fr 44px;
+      gap: 10px;
+      align-items: center;
+      font-family: var(--sans);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .bar-track {
+      height: 9px;
+      overflow: hidden;
+      background: #dedbd1;
+    }
+
+    .bar-fill {
+      display: block;
+      height: 100%;
+      width: calc(var(--v) * 1%);
+      background: var(--teal-2);
+    }
+
+    .bar-row.baseline .bar-fill {
+      background: #9da59f;
+    }
+
+    .bar-row.secondary .bar-fill {
+      background: var(--mustard);
+    }
+
+    .bar-value {
+      color: var(--teal);
+      font-family: var(--mono);
+      text-align: right;
+    }
+
+    .evidence-band {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 18px;
+      align-items: start;
+      margin: 22px 0;
+      padding: 20px 22px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 248, 0.72);
+    }
+
+    .evidence-band strong {
+      color: var(--teal);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .evidence-band p {
+      margin: 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .official-task-ledger {
+      margin: 28px 0 40px;
+      border: 1px solid var(--line-dark);
+      background: rgba(255, 253, 248, 0.76);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .official-task-ledger summary {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+      padding: 17px 20px;
+      color: var(--teal);
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 700;
+      list-style: none;
+    }
+
+    .official-task-ledger summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .official-task-ledger summary::after {
+      content: "+";
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 24px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .official-task-ledger[open] summary {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .official-task-ledger[open] summary::after {
+      content: "−";
+    }
+
+    .official-task-ledger ol {
+      columns: 2;
+      column-gap: 44px;
+      margin: 0;
+      padding: 22px 34px 10px 52px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .official-task-ledger li {
+      margin: 0 0 12px;
+      padding-left: 5px;
+      break-inside: avoid;
+    }
+
+    .official-task-ledger p {
+      margin: 2px 20px 20px;
+      padding: 13px 15px;
+      color: #71482f;
+      background: var(--orange-soft);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .official-quote {
+      margin: 36px 0;
+      padding: 30px 34px;
+      border-top: 1px solid var(--line-dark);
+      border-bottom: 1px solid var(--line-dark);
+      color: var(--teal);
+      font-size: clamp(23px, 3vw, 36px);
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .official-quote cite {
+      display: block;
+      margin-top: 14px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 11px;
+      font-style: normal;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .claim-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 30px 0 42px;
+    }
+
+    .claim-card {
+      padding: 23px;
+      border: 1px solid var(--line);
+      background: var(--paper-3);
+    }
+
+    .claim-card h3 {
+      margin: 0 0 10px;
+      font-size: 19px;
+    }
+
+    .claim-card p {
+      margin: 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.62;
+    }
+
+    .evidence-chip {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 3px 7px;
+      color: #fff;
+      background: var(--teal-2);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .evidence-chip.qualitative {
+      background: var(--mustard);
+    }
+
+    .evidence-chip.missing {
+      background: var(--orange);
+    }
+
+    .future-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 28px 0 42px;
+      counter-reset: future;
+    }
+
+    .future {
+      position: relative;
+      min-height: 172px;
+      padding: 24px 24px 22px 66px;
+      border: 1px solid var(--line);
+      background: var(--paper-3);
+    }
+
+    .future::before {
+      counter-increment: future;
+      content: counter(future);
+      position: absolute;
+      left: 22px;
+      top: 22px;
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 25px;
+      font-weight: 700;
+    }
+
+    .future h3 {
+      margin: 0 0 9px;
+      font-size: 18px;
+    }
+
+    .future p {
+      margin: 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .formula-group {
+      margin: 34px 0 50px;
+    }
+
+    .formula-group > h3 {
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line-dark);
+    }
+
+    .formula-cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .formula-card {
+      min-width: 0;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 248, 0.78);
+    }
+
+    .formula-card .formula-no {
+      color: var(--orange);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .formula-card .formula-text {
+      margin-top: 8px;
+      overflow-x: auto;
+      color: var(--teal);
+      font-family: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+      font-size: 16px;
+      line-height: 1.65;
+      white-space: nowrap;
+    }
+
+    .formula-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .ending {
+      margin-top: 60px;
+      padding: 42px;
+      color: #f5f0e6;
+      background:
+        linear-gradient(135deg, rgba(226, 104, 56, 0.28), transparent 38%),
+        var(--teal);
+      box-shadow: var(--shadow);
+    }
+
+    .ending h2 {
+      padding: 0;
+      border: 0;
+      color: #fff;
+    }
+
+    .ending p {
+      max-width: 66ch;
+      color: #dbe8e3;
+      font-size: 20px;
+      line-height: 1.72;
+    }
+
+    .ending p:last-child {
+      margin-bottom: 0;
+      color: #f2ab7c;
+      font-size: 25px;
+    }
+
+    .source-list {
+      margin-top: 44px;
+      padding: 23px 25px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 248, 0.72);
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .source-list h3 {
+      margin: 0 0 10px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .source-list ul {
+      margin: 0;
+      padding-left: 1.15em;
+    }
+
+    .page-footer {
+      padding: 34px 24px 42px;
+      color: #c8d8d2;
+      background: #0f2c2a;
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .page-footer strong {
+      color: #fff5e8;
+    }
+
+    @media (max-width: 1100px) {
+      .spec-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: none;
+      place-items: center;
+      padding: 58px 22px 22px;
+      background: rgba(8, 18, 17, 0.94);
+      backdrop-filter: blur(10px);
+    }
+
+    .lightbox.open {
+      display: grid;
+    }
+
+    .lightbox img {
+      max-width: min(96vw, 1700px);
+      max-height: 88vh;
+      object-fit: contain;
+      background: #fff;
+      box-shadow: 0 22px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    .lightbox button {
+      position: absolute;
+      right: 22px;
+      top: 16px;
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 210px minmax(0, 1fr);
+        gap: 42px;
+      }
+
+      .metric-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .metric:nth-child(3) {
+        border-right: 0;
+      }
+
+      .metric:nth-child(n + 4) {
+        border-top: 1px solid var(--line);
+      }
+
+      .figure,
+      .table-wrap {
+        width: 100%;
+      }
+
+      .flow {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .flow-node:nth-child(3)::after {
+        display: none;
+      }
+    }
+
+    @media (max-width: 820px) {
+      body {
+        font-size: 17px;
+      }
+
+      .hero {
+        min-height: 840px;
+      }
+
+      .hero::before {
+        background-position: 65% center;
+      }
+
+      .hero::after {
+        background: linear-gradient(0deg, rgba(7, 28, 26, 0.98) 0%, rgba(8, 32, 30, 0.84) 64%, rgba(8, 32, 30, 0.55) 100%);
+      }
+
+      .hero-inner,
+      .layout {
+        width: min(100% - 36px, 740px);
+      }
+
+      .hero h1 {
+        font-size: clamp(43px, 12vw, 72px);
+      }
+
+      .hero-loop {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 10px;
+      }
+
+      .loop-step:nth-child(2)::after {
+        display: none;
+      }
+
+      .layout {
+        display: block;
+        padding-top: 28px;
+      }
+
+      .toc {
+        display: none;
+      }
+
+      .mobile-toc {
+        display: block;
+        position: sticky;
+        top: 10px;
+        z-index: 90;
+        margin: 0 0 38px;
+        border: 1px solid var(--line-dark);
+        background: rgba(243, 239, 229, 0.96);
+        box-shadow: var(--shadow-soft);
+        backdrop-filter: blur(14px);
+      }
+
+      .mobile-toc summary {
+        padding: 13px 16px;
+        color: var(--teal);
+        cursor: pointer;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+      }
+
+      .mobile-toc .links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1px;
+        padding: 0 10px 12px;
+      }
+
+      .mobile-toc a {
+        padding: 8px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.45);
+        font-family: var(--sans);
+        font-size: 11px;
+        line-height: 1.35;
+        text-decoration: none;
+      }
+
+      .credit {
+        margin-bottom: 54px;
+      }
+
+      section {
+        margin-bottom: 78px;
+      }
+
+      .tldr {
+        padding: 26px 22px;
+      }
+
+      .concept-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .lineage-item {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+
+      .read-figure {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-node {
+        min-height: auto;
+      }
+
+      .flow-node:not(:last-child)::after {
+        content: "↓";
+        display: block;
+        top: auto;
+        right: 50%;
+        bottom: -23px;
+      }
+
+      .compare {
+        grid-template-columns: 1fr;
+      }
+
+      .schema-grid {
+        grid-template-columns: 150px 1fr;
+      }
+
+      .arch-grid,
+      .data-grid,
+      .rate-box,
+      .results-grid,
+      .claim-grid,
+      .future-grid,
+      .formula-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .training-schedule {
+        grid-template-columns: 1fr;
+      }
+
+      .schedule-stage {
+        min-height: auto;
+      }
+
+      .stack-layer {
+        grid-template-columns: 54px 1fr;
+      }
+
+      .stack-gain {
+        grid-column: 2;
+        text-align: left;
+      }
+
+      .evidence-band {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .official-task-ledger ol {
+        columns: 1;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .hero {
+        min-height: 770px;
+      }
+
+      .hero-inner {
+        padding-bottom: 32px;
+      }
+
+      .eyebrow {
+        font-size: 10px;
+      }
+
+      .hero h1 {
+        font-size: 42px;
+      }
+
+      .hero-subtitle {
+        font-size: 17px;
+      }
+
+      .hero-loop {
+        grid-template-columns: 1fr;
+      }
+
+      .loop-step {
+        min-height: 55px;
+      }
+
+      .loop-step::after {
+        display: none;
+      }
+
+      .metric-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .metric {
+        border-top: 1px solid var(--line);
+      }
+
+      .metric:nth-child(1),
+      .metric:nth-child(2) {
+        border-top: 0;
+      }
+
+      .metric:nth-child(2n) {
+        border-right: 0;
+      }
+
+      .metric:nth-child(3) {
+        border-right: 1px solid var(--line);
+      }
+
+      .metric:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .mobile-toc .links {
+        grid-template-columns: 1fr;
+      }
+
+      .figure {
+        padding: 6px;
+      }
+
+      .math {
+        text-align: left;
+      }
+
+      .schema-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .schema-key {
+        padding-bottom: 5px;
+        border-right: 0;
+        border-bottom: 0;
+      }
+
+      .schema-value {
+        padding-top: 3px;
+      }
+
+      .spec-grid,
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-row {
+        grid-template-columns: 104px 1fr 40px;
+      }
+
+      .ending {
+        padding: 28px 22px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #000;
+        font-size: 11pt;
+      }
+
+      body::before,
+      #reading-progress,
+      .toc,
+      .mobile-toc,
+      .lightbox {
+        display: none !important;
+      }
+
+      .hero {
+        min-height: auto;
+        color: #000;
+        background: #fff;
+        border-bottom: 2px solid #000;
+      }
+
+      .hero::before,
+      .hero::after,
+      .hero-grid {
+        display: none;
+      }
+
+      .hero-inner,
+      .layout {
+        width: 100%;
+        padding: 24px 0;
+      }
+
+      .hero h1,
+      .hero h1 em {
+        color: #000;
+        text-shadow: none;
+      }
+
+      .hero-subtitle,
+      .hero-meta,
+      .loop-step {
+        color: #222;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      section,
+      .figure,
+      .table-wrap,
+      .equation {
+        break-inside: avoid;
+      }
+
+      a {
+        color: #000;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="reading-progress" aria-hidden="true"></div>
+
+  <header class="hero">
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <p class="eyebrow">Paper Deep Dive · Native Video-Action Pretraining · Robot Control</p>
+      <h1>LingBot-VA 2.0<em>不再把视频模型“借来”开机器人</em></h1>
+      <p class="hero-subtitle">从语义视觉-动作 tokenizer、原生因果 DiT、128 专家稀疏 MoE，到边执行边预测、用真实观测持续纠偏的闭环控制系统。</p>
+
+      <div class="hero-loop" aria-label="闭环控制主线">
+        <div class="loop-step"><b>Observation</b>真实观测编码为语义视觉 latent</div>
+        <div class="loop-step"><b>Imagine</b>预测未来世界状态与多时间尺度变化</div>
+        <div class="loop-step"><b>Action Chunk</b>逆动力学解码下一段机器人动作</div>
+        <div class="loop-step"><b>Re-ground</b>真实反馈覆盖想象状态，重新闭环</div>
+      </div>
+
+      <div class="hero-meta">
+        <span>15.3B trained / 2.5B active</span>
+        <span>128 routed experts · Top-8</span>
+        <span>2-step video + action sampling</span>
+        <span>142 ms/chunk · 225 action-Hz</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <nav class="toc" aria-label="文章目录">
+      <p class="toc-title">Reading Map</p>
+      <a href="#summary">00 · 先抓住结论</a>
+      <a href="#background">01 · 问题与研究脉络</a>
+      <a href="#formalism">02 · Video-action 形式化</a>
+      <a href="#tokenizer">03 · 语义视觉-动作 tokenizer</a>
+      <a href="#planner">04 · 双系统层级规划</a>
+      <a href="#architecture">05 · 因果 DiT 与稀疏 MoE</a>
+      <a href="#learning">06 · MCP、ICL 与人机共训练</a>
+      <a href="#foresight">07 · Foresight 与实时部署</a>
+      <a href="#data">08 · 数据与训练配方</a>
+      <a href="#experiments">09 · 实验与关键数据</a>
+      <a href="#official">10 · 官方页面补充证据</a>
+      <a href="#critique">11 · 优缺点与研究边界</a>
+      <a href="#formula-atlas">12 · 32 个公式速查</a>
+    </nav>
+
+    <article>
+      <details class="mobile-toc">
+        <summary>READING MAP · 展开目录</summary>
+        <div class="links">
+          <a href="#summary">00 · 结论</a>
+          <a href="#background">01 · 脉络</a>
+          <a href="#formalism">02 · 形式化</a>
+          <a href="#tokenizer">03 · Tokenizer</a>
+          <a href="#planner">04 · Planner</a>
+          <a href="#architecture">05 · MoE</a>
+          <a href="#learning">06 · 训练信号</a>
+          <a href="#foresight">07 · Foresight</a>
+          <a href="#data">08 · 数据</a>
+          <a href="#experiments">09 · 实验</a>
+          <a href="#official">10 · 官网</a>
+          <a href="#critique">11 · 评价</a>
+          <a href="#formula-atlas">12 · 公式</a>
+        </div>
+      </details>
+
+      <div class="credit">
+        <p><strong>解读 by Xinkai Wang（王薪恺）</strong> · 上海创智学院 · 2026</p>
+        <p>原论文：<a href="https://arxiv.org/pdf/2607.06403" target="_blank" rel="noopener">Native Video-Action Pretraining for Generalizable Robot Control</a> · <a href="https://arxiv.org/abs/2607.06403" target="_blank" rel="noopener">arXiv</a> · <a href="https://technology.robbyant.com/lingbot-va-v2" target="_blank" rel="noopener">官方网页</a> · <a href="https://github.com/Robbyant/lingbot-va" target="_blank" rel="noopener">GitHub</a></p>
+        <p>技术细节、公式与实验协议以论文为准；官方项目页补充动态演示、能力概览和交互式成功率图。网页中的产品化表述与正式实验结论在文中分开讨论。</p>
+      </div>
+
+      <section id="summary" class="tldr">
+        <h2><span class="sec-no">SECTION 00</span>先抓住整篇论文的主线</h2>
+        <p class="lead">这篇论文最重要的判断是：机器人需要的不是“一个很会生成视频、后来被改造成策略的模型”，而是从表示、预训练目标、时序因果到部署循环都以闭环控制为第一约束的原生 video-action foundation model。</p>
+        <ol class="thesis-list">
+          <li><span><strong>问题不是少一个动作头，而是起点错了。</strong>传统视频 VAE 优先保存像素外观，双向视频扩散允许看见未来；机器人控制却要求动作相关表示、严格因果和高频反馈。</span></li>
+          <li><span><strong>第一层重构表示。</strong>新 tokenizer 同时做像素重建、视觉基础模型语义对齐，并从相邻帧自监督提取 latent action，让无动作标签的视频也携带“世界如何变化”的控制信号。</span></li>
+          <li><span><strong>第二层重构预训练。</strong>模型从头训练 causal DiT，用未来视觉生成与逆动力学联合学习；视频流换成 128 个 routed experts、每 token 激活 8 个的稀疏 MoE，动作流保持稠密。</span></li>
+          <li><span><strong>短视 teacher forcing 用 MCP 修正。</strong>一次监督未来 1–3 个 chunks，迫使中间表征学习轨迹级动力学，而不是靠复制相邻帧外观降低损失。</span></li>
+          <li><span><strong>部署以“预测—执行—纠偏”闭环。</strong>Foresight Reasoning 在机器人执行当前动作时提前推算下一动作，真实观测回来后覆盖 imagined latent；再叠加一致性蒸馏、FP8 TensorRT、paged KV cache 与 FlashInfer。</span></li>
+          <li><span><strong>证据最强之处在 tokenizer、MCP 和速度链路。</strong>RoboTwin 平均 93.6%，tokenizer 在 50 任务平均上提升 7.1–8.6 个百分点，MCP 在 50 fps 随机化设置 5k steps 时提升 29.7 个百分点，端到端推理从 927 降到 142 ms/chunk。</span></li>
+        </ol>
+
+        <div class="metric-strip" aria-label="关键数字">
+          <div class="metric"><b>93.6%</b><span>RoboTwin 平均成功率</span></div>
+          <div class="metric"><b>15.3B</b><span>训练总参数，推理约 2.5B active</span></div>
+          <div class="metric"><b>128 / 8</b><span>routed experts / Top-K</span></div>
+          <div class="metric"><b>142 ms</b><span>优化后每个动作 chunk 推理时间</span></div>
+          <div class="metric"><b>65.4k</b><span>内部第一视角人类 episodes</span></div>
+        </div>
+
+        <div class="callout insight">
+          <h3>一句话概括</h3>
+          <p>LingBot-VA 2.0 把“未来画面”从生成质量目标改造成动作决策的中间变量，再用真实反馈不断纠正这段想象，使世界模型真正进入控制回路。</p>
+        </div>
+      </section>
+
+      <section id="background">
+        <h2><span class="sec-no">SECTION 01</span>问题从哪里来：视频生成与机器人控制的三重错位</h2>
+        <p class="lead">过去一代 video-action model 的典型做法，是先拿一个为数字内容生成训练的 VAE 与视频扩散模型，再把它改成 causal、接上 action module、用机器人数据继续训练。LingBot-VA 2.0 认为这种路线的上限由预训练起点决定。</p>
+
+        <div class="concept-grid">
+          <div class="concept">
+            <span class="label">Representation mismatch</span>
+            <h3>像素好看，不等于动作可辨</h3>
+            <p>重建型 VAE 会保存纹理、颜色与局部细节，却没有动力学、任务语义或“什么变化由动作引起”的结构。</p>
+          </div>
+          <div class="concept">
+            <span class="label">Causality mismatch</span>
+            <h3>视频模型能看未来，机器人不能</h3>
+            <p>双向注意力让所有帧互相访问；闭环策略在时刻 t 只能使用过去与现在。后期改 causal 会改变计算图并侵蚀旧先验。</p>
+          </div>
+          <div class="concept">
+            <span class="label">Latency mismatch</span>
+            <h3>生成一次视频的延迟会变成控制停顿</h3>
+            <p>高维视觉 tokens 与多步去噪过慢；如果模型推理和真实动作串行，机器人每个 chunk 之间都会等待。</p>
+          </div>
+        </div>
+
+        <h3>研究脉络：从“直接反应”到“先想象再行动”</h3>
+        <div class="lineage">
+          <div class="lineage-item">
+            <div class="lineage-era">Reactive policy</div>
+            <div class="lineage-copy"><b>VLA：观察与语言直接回归动作</b><p>优势是继承互联网视觉语言先验，路径短、推理快；弱点是没有显式表示动作会怎样改变世界，长时一致性和样本效率受限。</p></div>
+          </div>
+          <div class="lineage-item">
+            <div class="lineage-era">World model → control</div>
+            <div class="lineage-copy"><b>视频预测成为动作中间层</b><p>Dreamitate、UniPi、UWM、DreamZero 与 LingBot-VA 等工作把未来视觉、视频条件或联合 video-action diffusion 引入策略，让动作建立在预测的状态转移上。</p></div>
+          </div>
+          <div class="lineage-item">
+            <div class="lineage-era">Latent action</div>
+            <div class="lineage-copy"><b>无动作标签视频也能抽出“变化变量”</b><p>Genie、LAPO、LAPA、Moto、UniVLA、RepWAM 与 Motus 等路线，从连续观测中推断离散或连续 latent action，为大规模人类/网页视频提供控制监督。</p></div>
+          </div>
+          <div class="lineage-item">
+            <div class="lineage-era">Native causal WAM</div>
+            <div class="lineage-copy"><b>LingBot-VA 2.0：不再从双向生成器回改</b><p>语义 tokenizer、latent action、causal DiT、MCP、human–robot co-training 与异步闭环部署被放在同一套训练目标里，从头面向机器人控制。</p></div>
+          </div>
+        </div>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig01_overview.png" width="1210" height="665" alt="LingBot-VA 2.0 总架构，包含语言模型、规划器、语义 VAE、MoE 视频模型、动作模型和 MCP" loading="eager" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 1</span>完整系统把任务目标、图像观测与人类示范编码进同一个 causal video-action 过程：视频模型预测未来视觉 tokens，动作模型根据状态转移做 inverse dynamics，MCP 在训练时看得更远，planner 负责长任务分段。</figcaption>
+        </figure>
+        <div class="read-figure">
+          <b>怎么读这张图</b>
+          <p>图中央的关键箭头不是 <em>observation → action</em>，而是 <em>observation → future latent → action</em>。也就是说，动作不是直接从当前帧猜出来，而是从“当前世界会如何演化”这个预测中解码出来。上下两层分别解决长时任务语义与高频连续控制。</p>
+        </div>
+
+        <div class="callout warning">
+          <h3>“原生”不等于每个模块都第一次出现</h3>
+          <p>semantic/latent tokenizer 建立在 RepWAM 上，MCP 来自 Next Forcing，视频 ICL 延续 Zero-WAM，MoE 路由借鉴 DeepSeek 系列与 Loss-Free Balancing，一致性蒸馏来自 Consistency Models。真正的创新重心是：把这些部件按闭环控制的因果链组织成一套从预训练到部署的一体化系统。</p>
+        </div>
+      </section>
+
+      <section id="formalism">
+        <h2><span class="sec-no">SECTION 02</span>把 video-action model 写清楚：它同时回答两个问题</h2>
+        <p class="lead">第一问是“世界下一步会变成什么样”；第二问是“什么动作把当前状态变成了那个未来”。论文用 flow matching 同时学习未来视觉与动作 chunk。</p>
+
+        <h3>先把原始动作对齐到视频 latent 的时间尺度</h3>
+        <p>视频 tokenizer 会按时间下采样。若原视频有 T 帧，latent 只有 T′ 帧，那么每两个 latent 之间对应 <em>f</em><sub>t</sub>=T/T′ 条低层动作。论文把这些动作合成一个 chunk；后文的 <em>a</em><sub>t</sub> 从来不是单条电机命令。</p>
+        <div class="equation">
+          <div class="eq-head"><span>动作 chunk 与视觉 transition 对齐</span><span class="eq-no">Eq. (3)</span></div>
+          <div class="math">a<sub>t</sub> = u<sub>t f<sub>t</sub> : (t+1) f<sub>t</sub> − 1</sub>, &nbsp; t = 0,…,N−1</div>
+          <div class="eq-note">一个 a<sub>t</sub> 对应 z<sub>t</sub> → z<sub>t+1</sub> 的整段低层控制。这个时间对齐决定了训练、MCP 预测 horizon 和部署时 32-step chunk 的含义。</div>
+        </div>
+
+        <h3>严格因果：现在不能注意未来</h3>
+        <div class="equation">
+          <div class="eq-head"><span>下一视觉 latent 只能依赖过去与现在</span><span class="eq-no">Eq. (4)</span></div>
+          <div class="math">p<sub>θ</sub>(z<sub>1:N</sub> | z<sub>0</sub>) = ∏<sub>t=0</sub><sup>N−1</sup> p<sub>θ</sub>(z<sub>t+1</sub> | z<sub>≤t</sub>)</div>
+          <div class="eq-note">普通视频生成器的双向 attention 会让 z<sub>t</sub> 访问 z<sub>t+1</sub>；机器人在线控制没有这项信息，因此论文直接从头用 block-causal attention 预训练。</div>
+        </div>
+
+        <h3>联合分解：先生成未来，再用逆动力学解码动作</h3>
+        <div class="equation">
+          <div class="eq-head"><span>Video generation × inverse dynamics</span><span class="eq-no">Eq. (5)</span></div>
+          <div class="math small">
+            p<sub>θ</sub>(z<sub>1:N</sub>,a<sub>0:N−1</sub> | z<sub>0</sub>) =
+            ∏<sub>t=0</sub><sup>N−1</sup>
+            p<sub>θ</sub>(z<sub>t+1</sub> | z<sub>≤t</sub>,a<sub>&lt;t</sub>)
+            · p<sub>θ</sub>(a<sub>t</sub> | z<sub>≤t</sub>,a<sub>&lt;t</sub>,z<sub>t+1</sub>)
+          </div>
+          <div class="eq-note">左项学习受过去动作影响的世界变化；右项从已知状态转移反推出动作。直觉上，模型必须先提出一个物理上连贯的未来，动作头再回答“怎样到达那里”。</div>
+        </div>
+
+        <div class="flow" aria-label="视频动作生成流程">
+          <div class="flow-node"><b>Past context</b>z<sub>≤t</sub> 与 a<sub>&lt;t</sub> 构成 causal 历史。</div>
+          <div class="flow-node"><b>Noisy future</b>对 z<sub>t+1</sub> 加噪，在 rectified-flow 路径上学习速度场。</div>
+          <div class="flow-node"><b>Video expert</b>积分速度场，得到未来视觉 latent ẑ<sub>t+1</sub>。</div>
+          <div class="flow-node"><b>Action expert</b>把过去与 ẑ<sub>t+1</sub> 作为条件，做 inverse dynamics。</div>
+          <div class="flow-node"><b>Execute</b>生成动作 chunk â<sub>t</sub>，交给机器人执行。</div>
+        </div>
+
+        <h3>Flow matching 的通俗解释</h3>
+        <p>它不是让模型一次从噪声猜出目标，而是在噪声 ε 与真实 latent z 之间画一条直线 z<sup>(s)</sup>=(1−s)ε+sz，让网络预测沿这条线前进的速度 z−ε。推理时沿速度场积分，就能把噪声搬到数据分布。视频和动作各有独立噪声时间，因此视觉可以在一个噪声水平上去噪，动作在另一个水平上去噪。</p>
+
+        <div class="equation">
+          <div class="eq-head"><span>视频与动作的两条 flow-matching 监督</span><span class="eq-no">Eq. (6–7)</span></div>
+          <div class="math small">
+            L<sub>vid</sub> = E ‖v<sub>θ</sub><sup>vid</sup>(z<sub>t+1</sub><sup>(s)</sup>,s | z<sub>≤t</sub>,a<sub>&lt;t</sub>) − (z<sub>t+1</sub>−ε<sub>z</sub>)‖²<br />
+            L<sub>act</sub> = E ‖v<sub>θ</sub><sup>act</sup>(a<sub>t</sub><sup>(s)</sup>,s | z<sub>≤t</sub>,a<sub>&lt;t</sub>,z<sub>t+1</sub>) − (a<sub>t</sub>−ε<sub>a</sub>)‖²
+          </div>
+          <div class="eq-note">总目标 L<sub>VA</sub>=L<sub>vid</sub>+λ<sub>act</sub>L<sub>act</sub>。LingBot 系列采用 Mixture-of-Transformers：视频与动作拥有各自的 FFN/输出头，但共享 causal attention，因此两种 token 能在同一历史里交换信息。</div>
+        </div>
+      </section>
+
+      <section id="tokenizer">
+        <h2><span class="sec-no">SECTION 03</span>第一块基石：语义视觉-动作 tokenizer</h2>
+        <p class="lead">普通 VAE 问“能否还原像素”；这里的 tokenizer 还要问“latent 是否保留任务语义”以及“两个状态之间的变化能否压缩成动作变量”。</p>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig02_tokenizer.png" width="2040" height="760" alt="语义视觉动作 tokenizer，包括输入视频、视觉基础模型对齐、视觉编码解码、逆动力学、前向动力学及四项训练损失" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 2</span>左半边以 L<sub>align</sub> 把重建 latent 拉向冻结视觉基础模型的语义特征，并以 L<sub>recon</sub> 保持可重建性；右半边用 inverse dynamics 从相邻 latent 提取低维 ℓ<sub>t</sub>，再由 forward dynamics 重建下一 latent，并通过 L<sub>fwd</sub> 与 L<sub>cons</sub> 约束动作的解释力与一致性。</figcaption>
+        </figure>
+
+        <h3>视觉 tokenization：既要可重建，也要“知道是什么”</h3>
+        <p>输入视频的第一帧被切成 16×16 spatial patches，后续帧切成 4×16×16 spatiotemporal tubelets。编码器在单帧内部使用 full spatial attention，在时间上使用 causal attention；对称 decoder 把 latent 还原到像素空间。</p>
+
+        <div class="equation">
+          <div class="eq-head"><span>重建 + 冻结视觉教师的语义对齐</span><span class="eq-no">Eq. (9–11)</span></div>
+          <div class="math small">
+            L<sub>rec</sub> = λ<sub>1</sub>‖o−ô‖<sub>1</sub> + λ<sub>perc</sub>L<sub>perc</sub>(o,ô) + λ<sub>gan</sub>L<sub>gan</sub>(ô)<br />
+            L<sub>align</sub> = ‖avg(W<sub>align</sub>z) − avg(G(o))‖²<sub>2</sub><br />
+            L<sub>vis</sub> = L<sub>rec</sub> + λ<sub>align</sub>L<sub>align</sub>
+          </div>
+          <div class="eq-note">G 是冻结的 Perception Encoder，W<sub>align</sub> 负责维度投影。论文在时间平均后的 clip-level feature 上对齐：能注入语义，但不会直接逐帧约束动作顺序。</div>
+        </div>
+
+        <h3>Latent action：把“变化原因”压进一个低维瓶颈</h3>
+        <p>冻结视觉 tokenizer 后，inverse dynamics model q<sub>φ</sub> 读取 (z<sub>t</sub>,z<sub>t+1</sub>)，输出低维 latent action ℓ<sub>t</sub>。若 ℓ<sub>t</sub> 容量太大，它可以偷懒复制整个未来状态；因此论文要求 d<sub>ℓ</sub> ≪ dim(z<sub>t</sub>)，逼它只保留导致变化的紧凑变量。</p>
+        <div class="equation">
+          <div class="eq-head"><span>逆动力学提取动作，前向动力学重建未来</span><span class="eq-no">Eq. (12–14)</span></div>
+          <div class="math small">
+            ℓ<sub>t</sub> = q<sub>φ</sub>(z<sub>t</sub>,z<sub>t+1</sub>) ∈ R<sup>dℓ</sup><br />
+            ẑ<sub>t+1</sub> = f<sub>ψ</sub>(z<sub>t</sub>,ℓ<sub>t</sub>) = K<sub>t</sub>z<sub>t</sub> + δ<sub>t</sub><br />
+            L<sub>ℓ</sub> = Σ<sub>t</sub>(‖ẑ<sub>t+1</sub>−z<sub>t+1</sub>‖² + ‖ẑ<sub>t</sub>−z<sub>t</sub>‖²)
+          </div>
+          <div class="eq-note">K<sub>t</sub> 是把信息在空间 latent tokens 间搬运的 transport map，δ<sub>t</sub> 表示无法由搬运解释的残差；再做一次反向预测，防止 ℓ<sub>t</sub> 只在单方向上投机。</div>
+        </div>
+
+        <div class="compare">
+          <div class="compare-card good">
+            <h3>它解决了什么</h3>
+            <ul>
+              <li>视觉 latent 不只保存外观，还贴近语言对齐的感知特征。</li>
+              <li>网页/人类视频没有机器人动作标签，也能提供 transition-level action signal。</li>
+              <li>状态变化通过 transport + residual 被结构化，长 horizon 更不容易退化成纹理复制。</li>
+            </ul>
+          </div>
+          <div class="compare-card risk">
+            <h3>仍需澄清什么</h3>
+            <ul>
+              <li>论文没有给出 d<sub>ℓ</sub>、输入分辨率和 temporal downsampling 的具体值。</li>
+              <li>被动视频的 latent action 可能混入相机运动、场景随机变化或非施动者影响。</li>
+              <li>方法段写 a<sub>t</sub>≡ℓ<sub>t</sub>，实现段却用 30-D raw robot action；两者的桥接目标未完整展开。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout insight">
+          <h3>最通俗的理解</h3>
+          <p>传统 VAE 像压缩视频的 ZIP：只要解压后像原图就行。这个 tokenizer 更像给每段视频同时写“场景语义标签”和“发生了什么操作”的运动摘要，后续策略不必从纯像素压缩码里重新发现控制结构。</p>
+        </div>
+      </section>
+
+      <section id="planner">
+        <h2><span class="sec-no">SECTION 04</span>双系统层级策略：2 Hz 的规划器与高频执行器</h2>
+        <p class="lead">低层 video-action policy 擅长完成一个局部 subtask，却不天然知道长任务何时切段。论文用一个预训练 VLM 做高层 planner，在后台低频理解任务进度，把结构化上下文持续写给高频执行器。</p>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig03_hierarchical_policy.png" width="1105" height="620" alt="高层 VLM planner 和低层视频动作执行器组成的双系统层级策略" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 3</span>Planner 读取任务目标与稀疏视觉观测，在约 2 Hz 后台更新 sub-task context；VA executor 同时读取机器人状态，在每个动作 chunk 边界拿走最新上下文并继续高频闭环控制。</figcaption>
+        </figure>
+
+        <div class="schema" aria-label="Planner 输出 JSON 结构">
+          <div class="schema-head"><span>Planner output schema</span><span>必须与策略训练条件完全一致</span></div>
+          <div class="schema-grid">
+            <div class="schema-key">done</div>
+            <div class="schema-value">当前 subtask 是否结束；只给高层 scheduler 决定继续还是切换。</div>
+            <div class="schema-key">instruction</div>
+            <div class="schema-value">紧凑执行指令，例如“拿起桌上的红色瓶子”；是策略训练的主条件。</div>
+            <div class="schema-key">generation_instruction</div>
+            <div class="schema-value">更细的机器人运动、接触方式与物体交互描述。</div>
+            <div class="schema-key">local_scene_description</div>
+            <div class="schema-value">从当前观测落地的空间布局与物体状态，减少策略对模糊语言的猜测。</div>
+          </div>
+        </div>
+
+        <h3>为什么输出格式本身就是模型接口</h3>
+        <p>Planner 并不是自由写一段“思考过程”。如果推理时的字段、句式或信息粒度与策略训练时不同，低层模型会收到分布外条件。于是作者把 planner 当作一个严格的 interface module：<code>done</code> 控制调度，后三个文本字段才进入 video-action policy。</p>
+
+        <h3>Boundary-crossing sampling：直接训练“何时换下一步”</h3>
+        <div class="table-wrap">
+          <table class="data">
+            <caption>Planner 的 boundary-crossing 训练样本构造。</caption>
+            <thead>
+              <tr><th>样本类型</th><th>观测时刻 t*</th><th>模型目标</th><th>训练难点</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>done=false</code></td><td>仍位于 segment g<sub>i</sub> 内</td><td>复述当前 g<sub>i</sub> 的四字段</td><td>持续追踪当前步骤是否仍成立</td></tr>
+              <tr><td><code>done=true</code></td><td>刚跨过 g<sub>i</sub>→g<sub>i+1</sub></td><td>直接预测下一段 g<sub>i+1</sub></td><td>不能看到当前 subtask 文本，只能从画面和历史推断转折</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>每个样本输入三张关键帧：t*−2 s、t*−1 s 与 t*；再加 episode-level goal、所有已完成 segment 的文本历史，以及仅在 <code>done=false</code> 时提供的当前 subtask。训练集按任务均衡，避免常见任务淹没稀有长程步骤。Planner 冻结 vision tower，只对预训练 VLM 的语言侧做 LoRA 微调。</p>
+
+        <div class="callout insight">
+          <h3>双系统的工程意义</h3>
+          <p>高层视觉语言推理慢，但它不需要 30 Hz 运行；低层动作生成快，却不该每个控制周期重新解决“整个任务下一步是什么”。异步 buffer 把两者解耦，让 planner 延迟不阻塞机器人，同时允许 executor 在 chunk 边界获得更新后的语义上下文。</p>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2><span class="sec-no">SECTION 05</span>因果 DiT 与稀疏 MoE：容量很大，每个 token 不必全付</h2>
+        <p class="lead">LingBot-VA 2.0 保留 Mixture-of-Transformers 的双流结构：视频流负责复杂视觉动力学，动作流负责低维控制。两者共享 causal attention，但视频 FFN 被替换为稀疏 MoE，动作 FFN 保持 dense。</p>
+
+        <div class="arch-grid">
+          <div class="arch-card" data-watermark="V">
+            <h3>Video stream · Sparse</h3>
+            <p>30 个 causal DiT blocks，video hidden 2048；进入共享 3072-D attention。每层 128 个 routed SwiGLU experts、Top-8，加 1 个 shared expert。</p>
+            <div class="expert-dots" aria-label="128 专家中激活 8 个的示意图">
+              <i class="active"></i><i></i><i></i><i></i><i class="active"></i><i></i><i></i><i></i>
+              <i></i><i class="active"></i><i></i><i></i><i></i><i></i><i class="active"></i><i></i>
+              <i></i><i></i><i class="active"></i><i></i><i></i><i></i><i></i><i class="active"></i>
+              <i></i><i></i><i></i><i class="active"></i><i></i><i></i><i></i><i class="active"></i>
+            </div>
+            <p class="micro-note">示意图按 32 个格表示专家池，橙色格表示稀疏激活比例；真实配置为 128 选 8。</p>
+          </div>
+          <div class="arch-card" data-watermark="A">
+            <h3>Action stream · Dense</h3>
+            <p>统一 raw action 为 30-D，按数据集 quantile normalization；缺失维 zero-pad 并 mask。action hidden 768，FFN 3072。</p>
+            <p>Video Q/K/V 从 2048 投影到 3072；Action Q/K/V 从 768 提升到同一 attention 空间，再各自投回原宽度。跨注意力共享文本 K/V，但动作流有独立 Q 与输出投影。</p>
+          </div>
+        </div>
+
+        <h3>Router 怎么选 expert</h3>
+        <div class="equation">
+          <div class="eq-head"><span>Sigmoid 打分 → group-limited Top-K → 归一化权重</span><span class="eq-no">Eq. (15–18)</span></div>
+          <div class="math small">
+            r<sub>i</sub>(h)=σ(g<sub>i</sub><sup>T</sup>h)<br />
+            R(h)=TopK<sub>group</sub>(r(h)+b,k), &nbsp; |R(h)|=k<br />
+            α<sub>i</sub>(h)=γ · r<sub>i</sub>(h) / Σ<sub>j∈R(h)</sub>r<sub>j</sub>(h)<br />
+            MoE(h)=E<sub>shared</sub>(h)+Σ<sub>i∈R(h)</sub>α<sub>i</sub>(h)E<sub>i</sub>(h)
+          </div>
+          <div class="eq-note">Bias b 只参与“选谁”，不进入最终 gate weight；因此它能纠正负载，又不直接改变已选 expert 的内容混合。Group-limited routing 先选少量 expert groups，再在组内选最终 Top-8，方便长序列通信与 grouped GEMM。</div>
+        </div>
+
+        <h3>不用 auxiliary loss，怎样避免所有 token 挤到少数专家</h3>
+        <p>每个优化 step 后统计 expert i 接收到的 token 数 c<sub>i</sub>。高于均值就降低其选择 bias，低于均值就提高 bias；更新还减去全体符号的均值，避免整体漂移。</p>
+        <div class="equation">
+          <div class="eq-head"><span>Auxiliary-loss-free load balancing</span><span class="eq-no">Eq. (19)</span></div>
+          <div class="math small">
+            v<sub>i</sub>=sign(c<sub>i</sub>−c̄), &nbsp;
+            b<sub>i</sub>←b<sub>i</sub>−η<sub>lb</sub>(v<sub>i</sub>−(1/N<sub>e</sub>)Σ<sub>j</sub>v<sub>j</sub>)
+          </div>
+          <div class="eq-note">它把“负载平衡”放进离散选择的慢更新，而不是在主 diffusion loss 上加一个可能扭曲表征的连续辅助梯度。论文仍保留轻量 sequence-wise router regularizer 与利用率监控。</div>
+        </div>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig04_moe_scaling.png" width="1210" height="350" alt="MoE-13B-A1.9B 与 Dense-5B 在训练步数和时间对齐下的损失曲线" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 4</span>按 optimization steps 对齐时 Dense-5B 略低；按 wall-clock time 对齐到约 50 小时时，两条曲线末端几乎重合。这个结果说明更大总容量没有显著优化惩罚，但并不直接证明 MoE 提升了最终控制成功率。</figcaption>
+        </figure>
+
+        <h3>主模型规格，一张表看完</h3>
+        <div class="spec-grid">
+          <div class="spec"><b>96</b><span>semantic tokenizer latent channels</span></div>
+          <div class="spec"><b>1×2×2</b><span>video latent patch embedding，T×H×W</span></div>
+          <div class="spec"><b>30</b><span>causal Transformer blocks</span></div>
+          <div class="spec"><b>2048</b><span>video hidden dimension</span></div>
+          <div class="spec"><b>3072</b><span>shared attention width</span></div>
+          <div class="spec"><b>24×128</b><span>attention heads × head dimension</span></div>
+          <div class="spec"><b>128→8</b><span>routed experts → active experts</span></div>
+          <div class="spec"><b>512</b><span>per-routed-expert intermediate dim</span></div>
+          <div class="spec"><b>768</b><span>action hidden dimension</span></div>
+          <div class="spec"><b>768→30</b><span>action output head → raw action space</span></div>
+          <div class="spec"><b>96×4=384</b><span>video output channels per spatial patch</span></div>
+          <div class="spec"><b>256-D</b><span>sinusoidal diffusion-timestep embedding</span></div>
+          <div class="spec"><b>13.0B / 1.9B</b><span>video backbone total / active</span></div>
+          <div class="spec"><b>15.3B / 2.5B</b><span>all trained / inference active per token</span></div>
+        </div>
+
+        <h3>Causal chunk generation 的训练随机化</h3>
+        <ul class="plain-list">
+          <li><strong>Chunk size：</strong>每一步在 1–4 个 latent frames 中均匀采样；评估固定为 2。</li>
+          <li><strong>History window：</strong>训练在 1–64 chunks 中均匀采样；评估使用 64-chunk sliding window。</li>
+          <li><strong>Exposure bias：</strong>以 0.5 概率把 clean history 换成小噪声版本，模拟自回归推理时上下文不完美。</li>
+          <li><strong>Text：</strong>UMT encoder 输出 4096-D、最长 512 tokens；以 0.1 概率丢文本做 classifier-free guidance。</li>
+          <li><strong>独立噪声时间：</strong>视频与动作的 diffusion timestep 分开采样；各自的 256-D sinusoidal embedding 经 MLP 生成 AdaLN 调制信号。</li>
+          <li><strong>模态专属参数：</strong>除共享的 3072-D joint-attention 空间外，视频与动作各有 LayerNorm、AdaLN table、timestep/text condition embedder 和输出头；视频头为 LayerNorm + linear 到 96×4=384 channels/patch，动作头为 LayerNorm + linear 768→30。</li>
+        </ul>
+
+        <div class="callout audit">
+          <h3>参数量里的一个容易漏读的细节</h3>
+          <p>Video backbone 约 13.0B total / 1.9B active，action expert 约 0.6B，三个 MCP heads 约 1.7B，所以训练总参数约 15.3B。标准推理丢弃 MCP，单 token 约激活 2.5B 参数。稀疏只降低每次计算，不会让 15.3B 权重的存储、加载和编译成本消失。</p>
+        </div>
+      </section>
+
+      <section id="learning">
+        <h2><span class="sec-no">SECTION 06</span>让预训练真正面向控制：MCP、ICL 与人机共训练</h2>
+        <p class="lead">原生 causal backbone 只是骨架。真正把网页视频、人类视频和机器人轨迹变成控制知识的，是三类额外信号：看得更远的 MCP、把示范当上下文的 ICL、以及把人手动作重定向到机器人空间的 co-training。</p>
+
+        <h3>MCP：相邻帧太像，模型会靠“复制”作弊</h3>
+        <p>在高帧率视频中，next chunk 与 current chunk 可能只有很小外观差异。只做 next-chunk teacher forcing，网络不必理解动力学也能得到低 loss。MCP 从同一 grounded prefix 同时监督未来三个 horizon，迫使主干表征编码轨迹级变化。</p>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig05_mcp.png" width="1210" height="770" alt="多 Chunk 预测模块，从主模型多个层融合特征并预测 next1 next2 next3" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 5</span>主 DiT 的第 3、11、19、29 层特征经两层 SiLU MLP 融合，依次送入三个 3-block MCP module。每个远期 head 读取上一个 MCP 的内部 feature 与自己的 noisy target，不读取真实或已生成的中间未来。</figcaption>
+        </figure>
+
+        <div class="equation">
+          <div class="eq-head"><span>从单步 teacher forcing 到 K-horizon 监督</span><span class="eq-no">Eq. (20–23)</span></div>
+          <div class="math small">
+            p<sub>θ</sub>(z<sub>t+1:t+K</sub> | z<sub>≤t</sub>,a<sub>&lt;t</sub>)
+            ≈ ∏<sub>k=1</sub><sup>K</sup>p<sub>θ,k</sub>(z<sub>t+k</sub> | h<sub>t</sub><sup>(k−1)</sup>)<br />
+            L<sub>MCP</sub> = Σ<sub>k=1</sub><sup>3</sup>w<sub>k</sub>L<sub>k</sub><sup>MCP</sup>,
+            &nbsp; (w<sub>1</sub>,w<sub>2</sub>,w<sub>3</sub>)=(0.5,0.2,0.1)
+          </div>
+          <div class="eq-note">每个 horizon 都是与主模型同型的 flow-matching loss，但使用更大的 timestep shift，使 noisy input 自身不足以解题，必须依赖主干的 causal representation。论文实验采用的标准推理丢弃 MCP heads，保留训练收益而不增加部署开销；方法本身也允许保留它们，与当前 chunk 并行准备下一视觉 chunk、进一步隐藏 rollout 延迟。MCP 与 Foresight 是两条独立机制，可以分别启用。</div>
+        </div>
+
+        <h3>Video ICL：示范视频是“动态说明书”</h3>
+        <p>文本很难完整描述稀有物体、复杂接触和多步骤时序。ICL 把一段语义一致的人类示范编码成 z<sub>icl</sub>，允许每个机器人 prediction step 读取整段示范。因为它来自另一条独立轨迹，不是机器人自身未来，所以不会违反机器人侧 causal mask。</p>
+        <div class="equation">
+          <div class="eq-head"><span>把人类示范 latent 加到每个机器人 transition 条件中</span><span class="eq-no">Eq. (24)</span></div>
+          <div class="math small">
+            p<sub>θ</sub>(z<sub>1:N</sub>,a<sub>0:N−1</sub>|z<sub>0</sub>,z<sub>icl</sub>) =
+            ∏<sub>t</sub>p<sub>θ</sub>(z<sub>t+1</sub>|z<sub>≤t</sub>,a<sub>&lt;t</sub>,z<sub>icl</sub>)
+            ·p<sub>θ</sub>(a<sub>t</sub>|z<sub>≤t</sub>,a<sub>&lt;t</sub>,z<sub>t+1</sub>,z<sub>icl</sub>)
+          </div>
+          <div class="eq-note">示范可以与机器人视频使用不同物体实例、视角和场景布局，只要求任务过程语义一致。因此模型要抽取“步骤与交互关系”，而不是做像素匹配。</div>
+        </div>
+
+        <h3>Human–robot co-training：把手当成虚拟平行夹爪</h3>
+        <p>人类视频廉价、多样，但手指与机器人 gripper 的动作空间不同。论文把每只手的 6-DoF world-frame root pose 原样保留，把 22 个 finger joints 通过 forward kinematics 还原 fingertip 位置，再把拇指视为一侧 jaw、其余四指视为另一侧，沿闭合方向计算整只手指包络的 aperture；该开度像机器人 gripper channel 一样按数据集做 quantile normalization。</p>
+        <p>这样一来，人类动作被映射到统一 action layout 的双手 end-effector slice：每手 6-DoF pose + 1 个 gripper opening。缺失通道 zero-pad 并 mask；人类与机器人各有 action encoder/decoder，却共享 video expert、action expert 与 causal attention。训练开始时，human action heads 从 robot heads 初始化，再按样本的 embodiment 选择对应分支更新，这比随机初始化提供了更稳定的共训练起点。</p>
+
+        <div class="equation">
+          <div class="eq-head"><span>跨 embodiment 的共享世界模型与域特定动作头</span><span class="eq-no">Eq. (25–27)</span></div>
+          <div class="math small">
+            a<sup>H</sup>=Φ(ã<sup>H</sup>)∈A<br />
+            â<sub>t</sub><sup>(d)</sup>=P<sub>d</sub>(v<sup>act</sup>(z<sub>≤t</sub>,E<sub>d</sub>(a<sub>&lt;t</sub>),ẑ<sub>t+1</sub>)), &nbsp; d∈{R,H}<br />
+            L<sub>co-train</sub>=E<sub>D<sub>R</sub></sub>[L<sub>vid</sub>+L<sub>act</sub><sup>R</sup>]+E<sub>D<sub>H</sub></sub>[L<sub>vid</sub>+L<sub>act</sub><sup>H</sup>]
+          </div>
+          <div class="eq-note">域特定头隔离人手与机器人末端在运动分布、动力学意义上的差异；共享主干则从两域学习世界变化。部署只留下机器人分支 (E<sub>R</sub>,P<sub>R</sub>)，没有额外推理成本。</div>
+        </div>
+
+        <h3>五个任务从头共训练，而不是训练完一个就扔掉</h3>
+        <div class="training-schedule" aria-label="多任务粗到细训练配方">
+          <div class="schedule-stage"><b>T2I</b>图像语义与外观 grounding<small>早期权重最高</small></div>
+          <div class="schedule-stage"><b>T2V</b>通用时间动态与运动先验<small>中期逐步增强</small></div>
+          <div class="schedule-stage"><b>TI2VA</b>未来视觉 + inverse dynamics + MCP<small>控制核心任务</small></div>
+          <div class="schedule-stage"><b>ICL</b>示范视频条件下的 robot rollout<small>新任务过程迁移</small></div>
+          <div class="schedule-stage"><b>HCT</b>人类与机器人轨迹共同更新共享主干<small>后期控制权重集中</small></div>
+        </div>
+
+        <div class="equation">
+          <div class="eq-head"><span>随训练进度 τ 改变任务采样分布</span><span class="eq-no">Eq. (28)</span></div>
+          <div class="math">L(τ)=Σ<sub>i∈T</sub>π<sub>i</sub>(τ)L<sub>i</sub>, &nbsp; π<sub>i</sub>(τ)≥0, &nbsp; Σ<sub>i</sub>π<sub>i</sub>(τ)=1</div>
+          <div class="eq-note">早期偏 T2I，中期偏 T2V，后期集中 TI2VA/ICL/HCT；被弱化的旧任务仍保持小而非零权重，用来抑制模型在 embodied adaptation 时忘掉通用外观与动态先验。</div>
+        </div>
+      </section>
+
+      <section id="foresight">
+        <h2><span class="sec-no">SECTION 07</span>Foresight Reasoning：机器人执行时，模型已经在准备下一步</h2>
+        <p class="lead">如果必须等当前动作结束、拿到新观测、完成多步去噪，再执行下一动作，那么模型延迟会直接变成机器人停顿。Foresight 把 prediction stream 与 execution stream 并行，但用真实观测持续把想象拉回现实。</p>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig06_foresight.png" width="1210" height="675" alt="Foresight Reasoning 的异步预测执行时间线" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 6</span>执行 Action 0 的同时，推理分支先把当前动作附加到 grounded cache，用 video expert 的 forward dynamics 想象结果，再让 IDM 产出 Action 1。真实 Obs 1/2 到达后，预测 latent 被覆盖，下一轮从新的 grounded cache 出发。</figcaption>
+        </figure>
+
+        <h3>一步循环拆开看</h3>
+        <ol class="plain-list">
+          <li><strong>Grounded cache C<sub>t</sub>：</strong>保存由真实观测确认的历史 (z<sub>≤t</sub>,a<sub>&lt;t</sub>)。</li>
+          <li><strong>动作正在执行：</strong>把 a<sub>t</sub> 临时附加到 C<sub>t</sub>；机器人继续运动，不等模型。</li>
+          <li><strong>Policy 自己做 FDM：</strong>video expert 用当前已执行动作预测 ẑ<sub>t+1</sub>。这里不是 tokenizer 阶段冻结的 f<sub>ψ</sub>，而是部署中的策略主干。</li>
+          <li><strong>提前产生下一动作：</strong>action expert 从临时上下文与 ẑ<sub>t+1</sub> 解码 a<sub>t+1</sub>，在上一段结束时已经备好。</li>
+          <li><strong>真实反馈纠偏：</strong>新图像编码成 z<sub>t+1</sub>，覆盖 KV cache 中的 ẑ<sub>t+1</sub>，连同已执行动作形成 C<sub>t+1</sub>。</li>
+        </ol>
+
+        <div class="equation">
+          <div class="eq-head"><span>策略 video expert 变成在线 forward dynamics predictor</span><span class="eq-no">Eq. (29–30)</span></div>
+          <div class="math small">
+            ẑ<sub>t+1</sub>=FDM<sub>θ</sub>(C<sub>t</sub>∪{a<sub>t</sub>})=v<sub>θ</sub><sup>vid</sup>(z<sub>≤t</sub>,a<sub>≤t</sub>)<br />
+            L<sub>FDM</sub>=E ‖v<sub>θ</sub><sup>vid</sup>(z<sub>t+1</sub><sup>(s)</sup>,s|z<sub>≤t</sub>,a<sub>≤t</sub>)−(z<sub>t+1</sub>−ε)‖²
+          </div>
+          <div class="eq-note">与普通 L<sub>vid</sub> 的关键差别，是条件中显式包含正在执行的 a<sub>t</sub>。如果长期把 ẑ 当真，模型会沿平滑但错误的 hallucinated trajectory 漂移；真实观测覆盖使它成为 predict-then-correct，而不是 open-loop imagination。</div>
+        </div>
+
+        <h3>一致性蒸馏：把 5/10 个去噪 step 都压成 2 个</h3>
+        <p>原 LingBot-VA 的 video expert 默认 5 steps、action expert 10 steps。作者冻结 post-trained flow model 作为 teacher，用相邻噪声时间上的 Euler step 构造同一 PF-ODE trajectory 的两个点，训练 student 在两个点都直接预测同一 clean endpoint。</p>
+        <div class="equation">
+          <div class="eq-head"><span>Teacher Euler step 与 consistency loss</span><span class="eq-no">Eq. (31–32)</span></div>
+          <div class="math small">
+            x̂<sup>(s<sub>n+1</sub>)</sup>=x<sup>(s<sub>n</sub>)</sup>+(s<sub>n+1</sub>−s<sub>n</sub>)v<sub>θ</sub>(x<sup>(s<sub>n</sub>)</sup>,s<sub>n</sub>)<br />
+            L<sub>CD</sub>=E d(f<sub>ξ</sub>(x<sup>(s<sub>n</sub>)</sup>,s<sub>n</sub>),f<sub>ξ−</sub>(x̂<sup>(s<sub>n+1</sub>)</sup>,s<sub>n+1</sub>))
+          </div>
+          <div class="eq-note">ξ− 是 stop-gradient 的 EMA target，d 使用 squared L2。视频和动作两位专家分别蒸馏，最终都只需 2 次 function evaluation。</div>
+        </div>
+
+        <h3>一致性蒸馏 + 三层推理优化</h3>
+        <div class="stack">
+          <div class="stack-layer">
+            <div><b>Consistency distillation</b><p>减少每个 chunk 的 denoising evaluations。</p></div>
+            <div class="stack-gain">927 → 466 ms</div>
+          </div>
+          <div class="stack-layer">
+            <div><b>Model level</b><p>ONNX/TensorRT 编译；Transformer 内 linear 用 FP8，首尾层保留 BF16。</p></div>
+            <div class="stack-gain">466 → 369 ms</div>
+          </div>
+          <div class="stack-layer">
+            <div><b>Sequence level</b><p>Paged/ragged KV cache + FlashInfer plugin，不物化 padded dense attention。</p></div>
+            <div class="stack-gain">369 → 272 ms</div>
+          </div>
+          <div class="stack-layer">
+            <div><b>System level</b><p>复用 bindings、shape configs、runtime tensors、cross-attention KV 与 scheduler metadata，减少同步。</p></div>
+            <div class="stack-gain">272 → 142 ms</div>
+          </div>
+        </div>
+
+        <div class="rate-box">
+          <div class="rate-card">
+            <b>225 action-Hz</b>
+            <span>论文按 (1000 / 142 ms) × K 计算，K=32 个低层动作/每 chunk。它表示动作吞吐率。</span>
+          </div>
+          <div class="rate-card derived">
+            <b>≈ 7.04 chunks/s</b>
+            <span>1000 / 142 的直接结果，才是模型完整生成一个新 chunk 的速率；并不等于每秒 225 次重新看图并重规划。</span>
+          </div>
+        </div>
+
+        <div class="callout warning">
+          <h3>225 Hz 应怎样准确表述</h3>
+          <p>一个 142 ms 的 chunk 内含 32 条低层控制，因此可以连续以 225 条动作/秒执行；真实 observation-grounded policy update 约 7 次/秒。Chunk 内仍存在短暂 open-loop 区间，快速接触、外力扰动和安全场景需要进一步研究自适应 chunk 长度与不确定性触发的提前 re-ground。</p>
+        </div>
+      </section>
+
+      <section id="data">
+        <h2><span class="sec-no">SECTION 08</span>数据与训练配方：从通用视频到 65.4k 人类操作 episodes</h2>
+        <p class="lead">论文把数据分成通用图像/视频、机器人、第一视角人类操作与 ICL 配对四类。公开的模型结构与优化器细节很丰富，但总训练 token、精确数据配比和算力预算仍未披露。</p>
+
+        <div class="data-grid">
+          <div class="data-card">
+            <span class="data-type">General image / video</span>
+            <h3>继承 LingBot-Video 的 web-scale corpus</h3>
+            <p>先学习广泛外观、语言语义与通用运动；论文未给图像数、视频时长、token 总量或细分比例。</p>
+          </div>
+          <div class="data-card">
+            <span class="data-type">Robot trajectories</span>
+            <h3>公共、半公开与内部数据混合</h3>
+            <p>AgiBot、RoboMind、InternData-A1、OXE/DROID、UMI 类数据、RoboCOIN，加数千小时内部演示；每条长轨迹被切成 atomic clips，并用 Qwen3.5-397B 重标注 clip prompt 与 global instruction。</p>
+          </div>
+          <div class="data-card">
+            <span class="data-type">Egocentric human</span>
+            <h3>65.4k episodes，超过 600 名操作者</h3>
+            <p>数千小时、超过 3.0k scene-task combinations，均为单路第一视角 RGB。五类桌面环境是厨房、餐桌、梳妆台、办公桌与工具台；任务覆盖物体放置、清洁、补充、组装、包装、文具与工具使用、化妆品整理。每帧含双手 6-DoF world-frame root pose 与每手 22 个 finger joints。</p>
+          </div>
+          <div class="data-card">
+            <span class="data-type">ICL pairs</span>
+            <h3>&gt;10 数据源、&gt;5k tasks、&gt;50k pairs</h3>
+            <p>从机器人视频抽样任务，经 VLM 生成编辑和视频 prompt，再用生成模型合成人类第一视角示范，按语义保真与物理合理性过滤后配对。</p>
+          </div>
+        </div>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig07_icl_pipeline.png" width="1210" height="635" alt="机器人视频转人类第一视角示范的 ICL 数据构造流水线" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 7</span>机器人视频先经任务 taxonomy 抽样；Gemini-3.1-Pro 分析任务并生成首帧编辑、视频生成 prompt；图中 Nano Banana Pro 编辑首帧，WAN-2.6 / Kling-V3 合成第一视角操作，再由 VLM 打语义与物理分数。</figcaption>
+        </figure>
+
+        <h3>ICL 数据过滤阈值也写在图里</h3>
+        <p>语义分数只有 5 / Perfect 通过，3 / Acceptable 与 1 / Bad 被拒绝；物理分数的 5 / Perfect 和 3 / Acceptable 可通过，1 / Bad 被拒绝。也就是说，任务语义要求更严格，物理视觉允许“可接受”样本进入。</p>
+
+        <h3>训练实现细节</h3>
+        <div class="table-wrap">
+          <table class="data">
+            <caption>LingBot-VA 2.0 的训练配置与参数分工。</caption>
+            <thead>
+              <tr><th>维度</th><th>配置</th><th>作用</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>目标</td><td>Rectified flow，velocity MSE + timestep-dependent reweighting</td><td>图像、视频、动作与 MCP 统一为 flow matching</td></tr>
+              <tr><td>Timestep shift</td><td>image 2；web/video 2；robot video-action 5；MCP 10；action 1</td><td>按模态和任务调整有效噪声难度；动作 timestep 与视频独立</td></tr>
+              <tr><td>Muon</td><td>lr 2×10<sup>−3</sup>，momentum 0.95，weight decay 0.1</td><td>更新 Transformer 内所有 2D matrices：attention、action FFN、MoE experts</td></tr>
+              <tr><td>AdamW</td><td>lr 1×10<sup>−4</sup>，β=(0.9,0.95)，ε=10<sup>−8</sup>，wd 0.01</td><td>更新 embedders、norm/AdaLN、bias 与输出头</td></tr>
+              <tr><td>LR schedule</td><td>2,000 steps linear warm-up，之后 constant</td><td>没有报告总 steps，因此 warm-up 占比未知</td></tr>
+              <tr><td>Gradient</td><td>global norm clip 1.0</td><td>抑制大规模 MoE/flow 联训的极端更新</td></tr>
+              <tr><td>分布式</td><td>FSDP full sharding；无 TP / PP / CP</td><td>bf16 mixed precision，FP32 gradient reduction，full activation checkpointing</td></tr>
+              <tr><td>Batch</td><td>每 rank 1 条 packed sequence</td><td>未报告 GPU 数与 global batch</td></tr>
+              <tr><td>验证</td><td>hold out 1%</td><td>用于 training/validation loss 监控</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout audit">
+          <h3>复现仍缺哪些关键数字</h3>
+          <p>Tokenizer 的 d<sub>ℓ</sub>、输入分辨率、temporal downsampling；λ<sub>1</sub>/λ<sub>perc</sub>/λ<sub>gan</sub>/λ<sub>align</sub>/λ<sub>act</sub>；Perception Encoder 层；MoE group 数、选中 group 数、γ 与 η<sub>lb</sub>；planner backbone 与 LoRA 配置；π(τ) 的精确曲线；训练总 steps、GPU 数、FLOPs、时长；consistency grid 与 EMA rate；CFG scale；推理硬件，均没有完整给出。</p>
+        </div>
+      </section>
+
+      <section id="experiments">
+        <h2><span class="sec-no">SECTION 09</span>实验怎么读：哪些结论有数字，哪些仍是展示</h2>
+        <p class="lead">论文有四组真正可量化的证据：真实机器人四任务、RoboTwin 50 任务、tokenizer/MCP 消融、推理延迟。ICL、跨 embodiment、planner 与 Foresight 的控制质量主要是定性案例或整体系统结果。</p>
+
+        <h3>真实机器人：四任务、每任务 20 条演示、一个共享 checkpoint</h3>
+        <p>Fruit Sorting 要把苹果、梨、橙子放入篮子；Pen Collection 依次把三支笔放进杯子；Drawer Tidying 先开抽屉再收纳桌面物体；Plate Handover 要推盘、取纸垫、放垫、再放目标物。四个任务不是分别训练，而是用每任务 20 条 teleoperation demonstrations 做 multi-task supervised finetuning，评估时同一个模型覆盖全部任务。</p>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig08_real_world.png" width="1210" height="750" alt="四项真实机器人任务的成功率与进度率，比较 LingBot-VA 2.0、1.0 与 pi0.5" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 8</span>VA 2.0 在四个任务的 success 与 progress 上都最高。最大成功率增益出现在 Fruit Sorting：67% 对 42%；最小增益是 Pen Collection：77% 对 75% 的 VA 1.0。</figcaption>
+        </figure>
+
+        <div class="table-wrap">
+          <table class="data">
+            <caption>Fig. 8 逐柱视觉复核值；单位为 %。纯文本抽取会把坐标轴刻度错当成柱值。</caption>
+            <thead>
+              <tr>
+                <th rowspan="2">任务</th>
+                <th colspan="3">Success rate</th>
+                <th colspan="3">Progress rate</th>
+              </tr>
+              <tr>
+                <th>VA 2.0</th><th>VA 1.0</th><th>π<sub>0.5</sub></th>
+                <th>VA 2.0</th><th>VA 1.0</th><th>π<sub>0.5</sub></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Pen Collection</td><td class="best">77</td><td>75</td><td>50</td><td class="best">88</td><td>83</td><td>73</td></tr>
+              <tr><td>Fruit Sorting</td><td class="best">67</td><td>42</td><td>42</td><td class="best">90</td><td>79</td><td>75</td></tr>
+              <tr><td>Drawer Tidying</td><td class="best">82</td><td>64</td><td>64</td><td class="best">89</td><td>70</td><td>69</td></tr>
+              <tr><td>Plate Handover</td><td class="best">64</td><td>55</td><td>45</td><td class="best">84</td><td>64</td><td>64</td></tr>
+              <tr><td><strong>算术平均</strong></td><td class="best"><strong>72.50</strong></td><td><strong>59.00</strong></td><td><strong>50.25</strong></td><td class="best"><strong>87.75</strong></td><td><strong>74.00</strong></td><td><strong>70.25</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>平均 Success</h3>
+            <p>四个真实任务的简单平均；论文图中没有单独画平均柱。</p>
+            <div class="bar-list">
+              <div class="bar-row"><span>LingBot-VA 2.0</span><span class="bar-track"><i class="bar-fill" style="--v:72.5"></i></span><span class="bar-value">72.5</span></div>
+              <div class="bar-row secondary"><span>LingBot-VA 1.0</span><span class="bar-track"><i class="bar-fill" style="--v:59"></i></span><span class="bar-value">59.0</span></div>
+              <div class="bar-row baseline"><span>π<sub>0.5</sub></span><span class="bar-track"><i class="bar-fill" style="--v:50.25"></i></span><span class="bar-value">50.3</span></div>
+            </div>
+          </div>
+          <div class="result-card">
+            <h3>平均 Progress</h3>
+            <p>在部分完成也有意义的长任务中，progress 比二值 success 更敏感。</p>
+            <div class="bar-list">
+              <div class="bar-row"><span>LingBot-VA 2.0</span><span class="bar-track"><i class="bar-fill" style="--v:87.75"></i></span><span class="bar-value">87.8</span></div>
+              <div class="bar-row secondary"><span>LingBot-VA 1.0</span><span class="bar-track"><i class="bar-fill" style="--v:74"></i></span><span class="bar-value">74.0</span></div>
+              <div class="bar-row baseline"><span>π<sub>0.5</sub></span><span class="bar-track"><i class="bar-fill" style="--v:70.25"></i></span><span class="bar-value">70.3</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="evidence-band">
+          <strong>证据缺口</strong>
+          <p>论文没有写每个任务的 rollout 数、success/progress 判定规则、初始化扰动范围、误差条、置信区间或多 seed，也没有说明三个模型是否完全共享训练数据、后训练预算与调参资源。因此平均优势清楚，但统计显著性无法判断。</p>
+        </div>
+
+        <h3>RoboTwin 2.0：50 个双臂任务的主结果</h3>
+        <p>所有方法都在 clean 场景 2,500 条 demos（50/task）与 heavy randomized 场景 25,000 条 demos（500/task）上做多任务训练，总计 27,500 条。</p>
+        <div class="table-wrap">
+          <table class="data">
+            <caption>论文 Table 1；双臂任务成功率，单位为 %。</caption>
+            <thead><tr><th>Method</th><th>Clean</th><th>Randomized</th><th>Avg.</th></tr></thead>
+            <tbody>
+              <tr><td>X-VLA</td><td>72.9</td><td>72.8</td><td>72.9</td></tr>
+              <tr><td>π<sub>0.5</sub></td><td>82.7</td><td>76.8</td><td>79.8</td></tr>
+              <tr><td>Motus</td><td>88.7</td><td>87.0</td><td>87.9</td></tr>
+              <tr><td>LingBot-VA</td><td>92.9</td><td>91.6</td><td>92.2</td></tr>
+              <tr><td><strong>LingBot-VA 2.0</strong></td><td class="best">93.8</td><td class="best">93.4</td><td class="best">93.6</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout audit">
+          <h3>论文正文有两处算术不一致</h3>
+          <p>按表中已展示数字，93.6−79.8=<strong>13.8</strong> 个百分点，不是正文写的 14.0；Clean 与 Randomized 的差是 93.8−93.4=<strong>0.4</strong> 个百分点，不是 0.6。除非作者使用未展示的未舍入值，否则应以表格可复核数字为准。</p>
+        </div>
+
+        <h3>Tokenizer 消融：预测 horizon 越长，差距越大</h3>
+        <p>作者对 WAN2.2 VAE 与新 tokenizer 分别从头训练同一个 1.3B video-action model，使用相同 token 数、相同 downstream architecture 和相同 RoboTwin post-training。</p>
+        <div class="table-wrap">
+          <table class="data">
+            <caption>论文 Table 2；50 个 RoboTwin 任务成功率，单位为 %。</caption>
+            <thead>
+              <tr><th rowspan="2">Metric</th><th colspan="2">WAN2.2 VAE</th><th colspan="2">Our tokenizer</th><th colspan="2">增益</th></tr>
+              <tr><th>Easy</th><th>Hard</th><th>Easy</th><th>Hard</th><th>Easy</th><th>Hard</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Average<sub>hor=1</sub></td><td>81.1</td><td>78.4</td><td class="best">86.2</td><td class="best">83.1</td><td>+5.1</td><td>+4.7</td></tr>
+              <tr><td>Average<sub>hor=2</sub></td><td>75.5</td><td>73.9</td><td class="best">85.7</td><td class="best">84.0</td><td>+10.2</td><td>+10.1</td></tr>
+              <tr><td>Average<sub>hor=3</sub></td><td>67.2</td><td>68.0</td><td class="best">92.0</td><td class="best">85.4</td><td>+24.8</td><td>+17.4</td></tr>
+              <tr><td>Average<sub>50 Tasks</sub></td><td>78.0</td><td>76.0</td><td class="best">86.6</td><td class="best">83.1</td><td>+8.6</td><td>+7.1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>这组结果最直接支持论文的表示论点：重建型 latent 的性能会随 horizon 拉长明显下降，而语义视觉-动作 tokenizer 的收益在长 horizon 更大。不过论文没有定义 <code>Average_hor</code> 的具体聚合方法，也没有解释新 tokenizer 的 hor=3 Easy 为什么反而高于 hor=1。</p>
+
+        <h3>MCP 消融：不是只涨终点，还显著加快收敛</h3>
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig10_mcp_ablation.png" width="1210" height="350" alt="MCP 在 12 fps 和 50 fps、clean 与 random 场景的训练曲线消融" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 10</span>同一个 5B baseline、相同数据与优化，只开关 MCP。四个设置都更快收敛；在最难的 50 fps randomized 设置，5k steps 时 +29.7 个百分点，20k steps 达到无 MCP 约 45k steps 的精度，作者记为 2.3× training speedup。</figcaption>
+        </figure>
+        <p>图中其余点没有数值标签，不能把目测曲线写成精确表格。MCP 的最强证据是<strong>优化效率</strong>；它是否单独提高最终现实机器人上限，还需要独立真实世界消融。</p>
+
+        <h3>推理加速：每一层都给出累积延迟</h3>
+        <div class="table-wrap">
+          <table class="data">
+            <caption>论文 Table 3；K=32 条低层动作/每 chunk。</caption>
+            <thead><tr><th>配置</th><th>Inference time (ms/chunk) ↓</th><th>Async Hz ↑</th><th>相对基线</th></tr></thead>
+            <tbody>
+              <tr><td>BF16 PyTorch async baseline</td><td>927</td><td>35</td><td>1.00×</td></tr>
+              <tr><td>+ Consistency distillation</td><td>466</td><td>69</td><td>1.99×</td></tr>
+              <tr><td>+ FP8 TensorRT compiled execution</td><td>369</td><td>87</td><td>2.51×</td></tr>
+              <tr><td>+ Paged/ragged KV + FlashInfer</td><td>272</td><td>118</td><td>3.41×</td></tr>
+              <tr><td>+ Runtime overhead reduction</td><td class="best">142</td><td class="best">225</td><td class="best">6.53×</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>ICL：有漂亮的组合迁移案例，但没有成功率</h3>
+        <p>训练场景含三种盘子与七个物体。模型只在四个 seen tasks 上微调，每任务 15 demos；测试时给一段人类参考视频与当前机器人观测，不更新权重，执行四个从未见过的物体—目标组合。</p>
+        <div class="table-wrap">
+          <table class="data">
+            <caption>ICL 微调阶段的全部四个 seen tasks；每项 15 条机器人示范。</caption>
+            <thead><tr><th>#</th><th>被操作物</th><th>目标位置</th><th>用于排除歧义的场景限定</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>white paper cup</td><td>white plate</td><td>物体类别唯一</td></tr>
+              <tr><td>2</td><td>silver coffee cup</td><td>silver plate</td><td>物体类别唯一</td></tr>
+              <tr><td>3</td><td>green pear</td><td>green plate</td><td>取中间的梨</td></tr>
+              <tr><td>4</td><td>silver mug</td><td>white plate</td><td>取左侧的杯子</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig09_icl_demo.png" width="1210" height="805" alt="四个未见任务上通过人类参考视频执行机器人操作的 ICL 展示" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 9</span>四个未见组合包括 calabash→green plate、white paper cup→silver plate、silver coffee cup→white plate、green pear next to silver mug→white plate。执行阶段不更新参数，但 backbone 已在四个 seen tasks 上做过 15-shot/task 微调。</figcaption>
+        </figure>
+        <div class="evidence-band">
+          <strong>能证明什么</strong>
+          <p>给定动态视觉参考时，模型存在 task-composition transfer 的定性能力；不能据此推出“从零只看一次就学会任意新任务”，因为没有 ICL 成功率、language-only baseline、多 seed，也没有对人类示范之外的机器人示范做独立实验。</p>
+        </div>
+
+        <h3>四类代表性演示覆盖的能力</h3>
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/paper/fig11_demos.png" width="1210" height="770" alt="桌面整理、传送带、薯片夹取和空气曲棍球四个机器人演示" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag">论文 Fig. 11</span>Desk Tidying 看长时状态与步骤；Conveyor Belt 看动态预测和时间同步；Chip Picking 在无触觉下测试薄脆物体的精细视觉控制；Air Hockey 看高速反应与轨迹预测。它们是定性展示，不是四个新的量化 benchmark。</figcaption>
+        </figure>
+      </section>
+
+      <section id="official">
+        <h2><span class="sec-no">SECTION 10</span>官方项目页补充了什么：能力叙事、交互图与任务演示</h2>
+        <p class="lead">官方网页把论文压成一条更面向部署的叙事：模型不等完整视频 rollout，而是在动作执行时预测未来；新观测到达后重锚定；示范视频提供动态上下文；低频 planner 与高频 executor 解耦。</p>
+
+        <blockquote class="official-quote">
+          “在执行中并行预测未来，用真实观测重新锚定，面向实时闭环控制。”
+          <cite>LingBot-VA 2.0 官方项目页</cite>
+        </blockquote>
+
+        <div class="claim-grid">
+          <div class="claim-card">
+            <span class="evidence-chip">论文形式化支持</span>
+            <h3>Foresight Reasoning</h3>
+            <p>官网强调“执行时预测未来”；论文 Eq. (29–30) 明确给出 FDM conditioning 与真实观测重锚定，Table 3 给出速度链路。</p>
+          </div>
+          <div class="claim-card">
+            <span class="evidence-chip qualitative">定性支持</span>
+            <h3>一段视频适应新任务</h3>
+            <p>官网描述 ICL 能在不重新训练时理解新布局与节奏。论文 Fig. 9 有四个组合迁移案例，但没有定量成功率。</p>
+          </div>
+          <div class="claim-card">
+            <span class="evidence-chip">方法细节支持</span>
+            <h3>低频规划、高频控制</h3>
+            <p>论文明确 planner 约 2 Hz，通过异步 buffer 在 chunk boundary 更新策略条件；官网用闭环动画解释这一接口。</p>
+          </div>
+          <div class="claim-card">
+            <span class="evidence-chip qualitative">展示视频支持</span>
+            <h3>跨任务稳定控制</h3>
+            <p>空气曲棍球、薯片夹取、传送带与桌面整理覆盖不同难点，但“稳定”没有单独误差或安全指标。</p>
+          </div>
+        </div>
+
+        <details class="official-task-ledger">
+          <summary>展开官方 ICL 轮播中的 9 组“示范视频 → 机器人执行”任务</summary>
+          <ol>
+            <li>silver coffee cup → silver plate</li>
+            <li>silver coffee cup → white plate</li>
+            <li>white paper cup → white plate</li>
+            <li>white paper cup → silver plate</li>
+            <li>middle green pear → brown-green plate</li>
+            <li>left green pear → white plate</li>
+            <li>left green pear → brown-green plate</li>
+            <li>left silver cup → white plate</li>
+            <li>calabash → brown-green plate</li>
+          </ol>
+          <p>这些是项目页轮播组件里的任务标签。网页把它们并列展示，没有逐项标注 seen / unseen，也没有给出每项成功率；因此不能把九组全部称为 zero-shot。论文 Fig. 9 的四个 unseen compositions 仍应以论文实验定义为准。</p>
+        </details>
+
+        <h3>四个任务海报：不要把演示视频当成统计表</h3>
+        <div class="gallery">
+          <figure class="gallery-card">
+            <img src="lingbot_va2_assets/official/demo_air_hockey.webp" width="1920" height="1080" alt="空气曲棍球官方演示海报" loading="lazy" decoding="async" />
+            <figcaption><span class="source-tag official">官网</span>Air Hockey · 快速反应与 puck 轨迹预测</figcaption>
+          </figure>
+          <figure class="gallery-card">
+            <img src="lingbot_va2_assets/official/demo_chip_picking.webp" width="1920" height="1080" alt="薯片夹取官方演示海报" loading="lazy" decoding="async" />
+            <figcaption><span class="source-tag official">官网</span>Chip Picking · 无触觉精细抓取</figcaption>
+          </figure>
+          <figure class="gallery-card">
+            <img src="lingbot_va2_assets/official/demo_conveyor_belt.webp" width="1920" height="1080" alt="传送带动态操作官方演示海报" loading="lazy" decoding="async" />
+            <figcaption><span class="source-tag official">官网</span>Conveyor Belt · 动态预测与时间同步</figcaption>
+          </figure>
+          <figure class="gallery-card">
+            <img src="lingbot_va2_assets/official/demo_desk_tidying.webp" width="1920" height="1080" alt="长程桌面整理官方演示海报" loading="lazy" decoding="async" />
+            <figcaption><span class="source-tag official">官网</span>Desk Tidying · 长程规划与状态追踪</figcaption>
+          </figure>
+        </div>
+
+        <h3>官方成功率图与论文一致，但展示更精简</h3>
+        <p>网页显示四个真实任务的 success rate，以及 RoboTwin Randomized；它省略了论文 Fig. 8 的 progress rate、RoboTwin Clean 与 Avg.。数值本身完全一致：</p>
+        <div class="table-wrap">
+          <table class="data">
+            <caption>官方项目页公开的成功率条目。</caption>
+            <thead><tr><th>官方页面条目</th><th>LingBot-VA 2.0</th><th>LingBot-VA 1.0</th><th>π<sub>0.5</sub></th></tr></thead>
+            <tbody>
+              <tr><td>Pen Collection</td><td class="best">77</td><td>75</td><td>50</td></tr>
+              <tr><td>Fruit Sorting</td><td class="best">67</td><td>42</td><td>42</td></tr>
+              <tr><td>Drawer Tidying</td><td class="best">82</td><td>64</td><td>64</td></tr>
+              <tr><td>Plate Handover</td><td class="best">64</td><td>55</td><td>45</td></tr>
+              <tr><td>RoboTwin Randomized</td><td class="best">93.4</td><td>91.6</td><td>76.8</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/official/icl_pipeline.webp" width="2400" height="1350" alt="官方项目页中的 ICL 数据构造高清图" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag official">官方网页</span>项目页提供 2400×1350 的 ICL pipeline 高清版本。最值得关注的是它把“参考视频”当成一种可扩展数据产品：任务抽样、首帧编辑、第一视角视频生成、语义/物理筛选、与原机器人轨迹配对。</figcaption>
+        </figure>
+
+        <figure class="figure wide">
+          <img src="lingbot_va2_assets/official/planner_poster.webp" width="1280" height="720" alt="官方项目页 Planner 演示海报" loading="lazy" decoding="async" />
+          <figcaption><span class="source-tag official">官方网页</span>Planner 演示把任务目标、观测、sub-task context、robot action 和新观测画成闭环。它是论文 Fig. 3 的动态化版本，便于理解 2 Hz 语义规划如何服务高频执行。</figcaption>
+        </figure>
+
+        <div class="callout warning">
+          <h3>官网速度标签与论文速度指标不是同一件事</h3>
+          <p>项目页有 30 / 60 / 150 Hz 演示片段，并概括“超过 4× 端到端加速”；正式量化仍应引用 Table 3 的 927→142 ms/chunk、35→225 derived Async Hz、6.53×。视频播放帧率、低层动作吞吐率与 observation-conditioned replanning rate 不能互换。</p>
+        </div>
+      </section>
+
+      <section id="critique">
+        <h2><span class="sec-no">SECTION 11</span>客观评价：这篇论文真正强在哪里，又把哪些问题留在图外</h2>
+
+        <div class="compare">
+          <div class="compare-card good">
+            <h3>最强的地方</h3>
+            <ul>
+              <li><strong>设计逻辑一致：</strong>表示、causal objective、MCP、异步执行都围绕“预测世界变化再解码动作”。</li>
+              <li><strong>Tokenizer 与 MCP 有受控消融：</strong>不仅报告总体模型更强，还展示长 horizon 表示收益与收敛效率。</li>
+              <li><strong>工程细节充足：</strong>模型宽度、experts、路由、优化器、精度、cache 与 TensorRT 栈都比多数机器人 foundation model 报告更具体。</li>
+              <li><strong>真实任务类型互补：</strong>长程整理、动态传送带、薄脆物体、快速游戏分别施压规划、预测、精度与延迟。</li>
+              <li><strong>人手到功能 gripper：</strong>不再用 no-op gripper placeholder，而是保留抓握开合时序。</li>
+            </ul>
+          </div>
+          <div class="compare-card risk">
+            <h3>最需要保留的疑问</h3>
+            <ul>
+              <li><strong>没有失败案例：</strong>看不到碰撞、误抓、planner 切错步骤、world-model hallucination 或 ICL 误读。</li>
+              <li><strong>关键模块没逐一消融：</strong>native causal、semantic alignment、latent action、MoE、HCT、planner、Foresight re-grounding 都缺独立贡献量化。</li>
+              <li><strong>跨 embodiment 主张缺指标：</strong>没有留一机器人迁移矩阵或 zero/few-shot embodiment benchmark。</li>
+              <li><strong>评估统计不完整：</strong>真实 rollout 数、误差条、progress 定义、seed、baseline 预算都未报告。</li>
+              <li><strong>复现链条仍断：</strong>数据配比、总 steps、硬件与多项损失权重缺失。</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>几项最重要的“主张—证据”对照</h3>
+        <div class="claim-grid">
+          <div class="claim-card">
+            <span class="evidence-chip missing">未独立验证</span>
+            <h3>从头 causal 优于双向 retrofit</h3>
+            <p>这是论文最核心的起点判断，但没有 matched-data、matched-compute 的 from-scratch vs retrofit ablation。</p>
+          </div>
+          <div class="claim-card">
+            <span class="evidence-chip qualitative">部分支持</span>
+            <h3>10–15 demos 即可适应</h3>
+            <p>主真实 benchmark 实际为 20 demos/task；ICL seen tasks 才是 15/task，且没有 10-shot learning curve。</p>
+          </div>
+          <div class="claim-card">
+            <span class="evidence-chip">较强支持</span>
+            <h3>Tokenizer 改善长 horizon</h3>
+            <p>1.3B matched architecture 上 hor=1/2/3 与 50-task average 全面领先，且 horizon 越长差距越大。</p>
+          </div>
+          <div class="claim-card">
+            <span class="evidence-chip">较强支持</span>
+            <h3>MCP 提高训练效率</h3>
+            <p>5B baseline 只开关 MCP；12/50 fps、clean/random 都更快，明确给出 +29.7 pp 与 2.3×。</p>
+          </div>
+          <div class="claim-card">
+            <span class="evidence-chip qualitative">定性支持</span>
+            <h3>ICL 带来新任务组合迁移</h3>
+            <p>四个未见组合能执行，但没有成功率、language-only 对照或不同参考视频敏感性。</p>
+          </div>
+          <div class="claim-card">
+            <span class="evidence-chip missing">系统级而非因果</span>
+            <h3>MoE 提高控制泛化</h3>
+            <p>Fig. 4 只证明相近 wall-clock loss；没有 dense/MoE 的控制任务成功率对照。</p>
+          </div>
+        </div>
+
+        <h3>表示接口里最值得追问的歧义</h3>
+        <p>Sec. 2.2 把无标签视频抽出的 latent action 写成 a<sub>t</sub>≡ℓ<sub>t</sub>；Sec. 4.1 又明确 action target/output 是 quantile-normalized 的 raw 30-D robot action；HCT 再加域特定 E<sub>d</sub>/P<sub>d</sub>。论文没有完整说明三者在同一个 batch 中怎样对齐、是否共享 action diffusion space、ℓ<sub>t</sub> 如何监督 raw action decoder。</p>
+        <p>同样，“world states 与 actions 位于一个 latent space”的文字略强于形式化：z<sub>t</sub> 是高维空间 token tensor，ℓ<sub>t</sub> 是独立低维瓶颈，它们通过 IDM/FDM 耦合，却没有显式共享坐标系、对比对齐 loss 或 representation probe。更准确的说法是：它们被放进同一套联合动力学建模体系。</p>
+
+        <h3>技术风险与真实部署边界</h3>
+        <ul class="plain-list">
+          <li><strong>Temporal average alignment：</strong>clip-level 语义对齐可能忽略动作顺序；应加入时序敏感 teacher feature 或 transition contrastive objective。</li>
+          <li><strong>Passive latent action identifiability：</strong>相机移动、非操作者变化、物体自运动可能被编码成 action；需要因果干预或可控性 probe。</li>
+          <li><strong>2 Hz planner 滞后：</strong>快速环境变化下 subtask context 可能落后；应让 executor 触发 event-driven replanning。</li>
+          <li><strong>Chunk 内 open-loop：</strong>Foresight 只在新观测回来时纠偏；接触任务可按不确定性、视觉变化或力觉事件动态缩短 chunk。</li>
+          <li><strong>没有 safety/OOD 机制：</strong>论文未报告不确定性、异常观测、人与机器人共处、安全停止或失败恢复。</li>
+          <li><strong>稀疏模型仍重：</strong>15.3B 权重的显存、TensorRT engine 构建与多机器人部署成本没有讨论。</li>
+        </ul>
+
+        <h3>作者提出的三个方向，以及本文补充的三个方向</h3>
+        <div class="future-grid">
+          <div class="future">
+            <h3>Planner 与 policy 联合训练</h3>
+            <p>当前两者分开训练、通过固定 JSON 接口连接。联合优化可让 subtask 边界、语言粒度与低层可执行性共同适应。</p>
+          </div>
+          <div class="future">
+            <h3>给 latent action 加交互或强化信号</h3>
+            <p>目前主要来自被动视频。真实交互、reward 或可控性监督可把“观察到的变化”进一步收敛成“可执行的动作变量”。</p>
+          </div>
+          <div class="future">
+            <h3>继续扩数据、MoE 与 embodiment</h3>
+            <p>从双臂操作走向更多机器人结构，并验证稀疏容量在更大数据与更开放环境下是否继续缩放。</p>
+          </div>
+          <div class="future">
+            <h3>本文补充：完整因果消融</h3>
+            <p>对 native causal、HCT、planner、Foresight、distillation/FP8 分别做 factorial ablation，同时报告控制质量与速度。</p>
+          </div>
+          <div class="future">
+            <h3>本文补充：量化 ICL 与失败模式</h3>
+            <p>建立 language-only、single-frame、human-video、robot-video 对照；公开错误参考、错误步骤与安全恢复案例。</p>
+          </div>
+          <div class="future">
+            <h3>本文补充：不确定性感知的 imagination</h3>
+            <p>预测不确定时缩短 chunk、提前请求真实观测或退回保守 controller，避免 imagined latent 在高风险接触中被过度信任。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="formula-atlas">
+        <h2><span class="sec-no">SECTION 12</span>32 个编号公式速查：从视频压缩到两步实时采样</h2>
+        <p class="lead">下面把论文全部编号公式按功能归档。它不是符号堆砌，而是一条完整因果链：压缩观测 → 生成未来 → 逆推动作 → 提取 latent action → 扩展容量与 horizon → 融合人类数据 → 异步闭环 → 蒸馏加速。</p>
+
+        <div class="formula-group">
+          <h3>A · 从视频生成器到 video-action model</h3>
+          <div class="formula-cards">
+            <div class="formula-card">
+              <span class="formula-no">EQ. 01 · VIDEO TOKENIZATION</span>
+              <div class="formula-text">z=E(o)∈R<sup>T′×h×w×c</sup>, &nbsp; ô=D(z)≈o</div>
+              <p>把 T×H×W 视频压缩成时空 latent；f<sub>t</sub>=T/T′，f<sub>s</sub>=H/h=W/w。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 02 · FLOW MATCHING</span>
+              <div class="formula-text">L<sub>gen</sub>=E‖v<sub>θ</sub>(z<sup>(s)</sup>,s|c<sub>text</sub>)−(z−ε)‖²</div>
+              <p>其中 z<sup>(s)</sup>=(1−s)ε+sz；网络学习从噪声走向数据的速度。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 03 · ACTION CHUNK</span>
+              <div class="formula-text">a<sub>t</sub>=u<sub>t f<sub>t</sub>:(t+1)f<sub>t</sub>−1</sub></div>
+              <p>把原始控制频率上的动作分组，使一段动作与 z<sub>t</sub>→z<sub>t+1</sub> 对齐。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 04 · CAUSAL VIDEO</span>
+              <div class="formula-text">p<sub>θ</sub>(z<sub>1:N</sub>|z<sub>0</sub>)=∏<sub>t=0</sub><sup>N−1</sup>p<sub>θ</sub>(z<sub>t+1</sub>|z<sub>≤t</sub>)</div>
+              <p>未来视觉只依赖过去和现在，是闭环部署的时序约束。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 05 · JOINT FACTORIZATION</span>
+              <div class="formula-text">∏<sub>t</sub>p(z<sub>t+1</sub>|z<sub>≤t</sub>,a<sub>&lt;t</sub>)p(a<sub>t</sub>|z<sub>≤t</sub>,a<sub>&lt;t</sub>,z<sub>t+1</sub>)</div>
+              <p>世界预测 × inverse dynamics，是整篇论文最核心的概率分解。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 06 · VIDEO LOSS</span>
+              <div class="formula-text">L<sub>vid</sub>=E‖v<sup>vid</sup>(z<sub>t+1</sub><sup>(s)</sup>,s|z<sub>≤t</sub>,a<sub>&lt;t</sub>)−(z<sub>t+1</sub>−ε<sub>z</sub>)‖²</div>
+              <p>未来视觉分支的 conditional flow matching。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 07 · ACTION LOSS</span>
+              <div class="formula-text">L<sub>act</sub>=E‖v<sup>act</sup>(a<sub>t</sub><sup>(s)</sup>,s|z<sub>≤t</sub>,a<sub>&lt;t</sub>,z<sub>t+1</sub>)−(a<sub>t</sub>−ε<sub>a</sub>)‖²</div>
+              <p>动作分支在状态转移条件下去噪；L<sub>VA</sub>=L<sub>vid</sub>+λ<sub>act</sub>L<sub>act</sub>。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 08 · MIXTURE-OF-TRANSFORMERS</span>
+              <div class="formula-text">ẑ<sub>t+1</sub>=v<sup>vid</sup>(z<sub>≤t</sub>,a<sub>&lt;t</sub>), &nbsp; â<sub>t</sub>=v<sup>act</sup>(z<sub>≤t</sub>,a<sub>&lt;t</sub>,ẑ<sub>t+1</sub>)</div>
+              <p>视频与动作专家共享 attention、拥有不同 FFN；此处 v 表示积分后的样本而非单次速度。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="formula-group">
+          <h3>B · Semantic visual-action tokenizer</h3>
+          <div class="formula-cards">
+            <div class="formula-card">
+              <span class="formula-no">EQ. 09 · RECONSTRUCTION</span>
+              <div class="formula-text">L<sub>rec</sub>=λ<sub>1</sub>‖o−ô‖<sub>1</sub>+λ<sub>perc</sub>L<sub>perc</sub>+λ<sub>gan</sub>L<sub>gan</sub></div>
+              <p>像素、感知与对抗损失共同保证可解码画面。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 10 · SEMANTIC ALIGNMENT</span>
+              <div class="formula-text">L<sub>align</sub>=‖avg(W<sub>align</sub>z)−avg(G(o))‖²<sub>2</sub></div>
+              <p>把 clip-level latent 拉向冻结 Perception Encoder 的语义特征。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 11 · VISUAL OBJECTIVE</span>
+              <div class="formula-text">L<sub>vis</sub>=L<sub>rec</sub>+λ<sub>align</sub>L<sub>align</sub></div>
+              <p>在还原外观与保留语义之间平衡。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 12 · LATENT ACTION</span>
+              <div class="formula-text">ℓ<sub>t</sub>=q<sub>φ</sub>(z<sub>t</sub>,z<sub>t+1</sub>)∈R<sup>dℓ</sup>, &nbsp; d<sub>ℓ</sub>≪dim(z<sub>t</sub>)</div>
+              <p>逆动力学从相邻状态压缩出控制相关的 transition variable。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 13 · FORWARD DYNAMICS</span>
+              <div class="formula-text">ẑ<sub>t+1</sub>=f<sub>ψ</sub>(z<sub>t</sub>,ℓ<sub>t</sub>)=K<sub>t</sub>z<sub>t</sub>+δ<sub>t</sub></div>
+              <p>Transport map 搬运空间信息，residual 解释非搬运变化。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 14 · BIDIRECTIONAL CONSISTENCY</span>
+              <div class="formula-text">L<sub>ℓ</sub>=Σ<sub>t</sub>(‖ẑ<sub>t+1</sub>−z<sub>t+1</sub>‖²+‖ẑ<sub>t</sub>−z<sub>t</sub>‖²)</div>
+              <p>前向预测未来、反向预测过去，约束 latent action 真的解释 transition。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="formula-group">
+          <h3>C · Sparse MoE routing</h3>
+          <div class="formula-cards">
+            <div class="formula-card">
+              <span class="formula-no">EQ. 15 · ROUTER SCORE</span>
+              <div class="formula-text">r<sub>i</sub>(h)=σ(g<sub>i</sub><sup>T</sup>h), &nbsp; i=1,…,N<sub>e</sub></div>
+              <p>每个 hidden token 对每个 routed expert 计算 sigmoid score。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 16 · GROUP-LIMITED TOP-K</span>
+              <div class="formula-text">R(h)=TopK<sub>group</sub>(r(h)+b,k), &nbsp; |R(h)|=k</div>
+              <p>Correction bias 只影响选择；主配置 N<sub>e</sub>=128、k=8。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 17 · ROUTING WEIGHT</span>
+              <div class="formula-text">α<sub>i</sub>(h)=γr<sub>i</sub>(h)/Σ<sub>j∈R(h)</sub>r<sub>j</sub>(h)</div>
+              <p>对已选 expert 的原始 score 归一化，再乘 routed scale γ。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 18 · MOE OUTPUT</span>
+              <div class="formula-text">MoE(h)=E<sub>shared</sub>(h)+Σ<sub>i∈R(h)</sub>α<sub>i</sub>(h)E<sub>i</sub>(h)</div>
+              <p>共享 expert 处理共性，少量 routed experts 提供条件容量。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 19 · LOAD-BALANCE BIAS</span>
+              <div class="formula-text">v<sub>i</sub>=sign(c<sub>i</sub>−c̄), &nbsp; b<sub>i</sub>←b<sub>i</sub>−η<sub>lb</sub>(v<sub>i</sub>−N<sub>e</sub><sup>−1</sup>Σ<sub>j</sub>v<sub>j</sub>)</div>
+              <p>拥挤 expert 降 bias，冷门 expert 升 bias，不给主 loss 注入大额 balancing gradient。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="formula-group">
+          <h3>D · MCP、ICL、人机共训练与多任务预训练</h3>
+          <div class="formula-cards">
+            <div class="formula-card">
+              <span class="formula-no">EQ. 20 · MYOPIC TEACHER FORCING</span>
+              <div class="formula-text">p<sub>θ</sub>(z<sub>t+1</sub>|z<sub>≤t</sub>,a<sub>&lt;t</sub>)</div>
+              <p>只看 next chunk 的标准监督，容易复制相邻外观。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 21 · MULTI-HORIZON FACTORIZATION</span>
+              <div class="formula-text">p(z<sub>t+1:t+K</sub>|·)≈∏<sub>k=1</sub><sup>K</sup>p<sub>θ,k</sub>(z<sub>t+k</sub>|h<sub>t</sub><sup>(k−1)</sup>)</div>
+              <p>远期模块复用前一 MCP 的内部 feature，而不是喂真实中间未来。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 22 · HORIZON LOSS</span>
+              <div class="formula-text">L<sub>k</sub><sup>MCP</sup>=E‖v<sub>θ,k</sub><sup>MCP</sup>(z<sub>t+k</sub><sup>(s)</sup>,s|h<sub>t</sub><sup>(k−1)</sup>)−(z<sub>t+k</sub>−ε<sub>t</sub><sup>k</sup>)‖²</div>
+              <p>每个 horizon 各自做 flow matching。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 23 · MCP WEIGHTING</span>
+              <div class="formula-text">L<sub>MCP</sub>=Σ<sub>k=1</sub><sup>K</sup>w<sub>k</sub>L<sub>k</sub><sup>MCP</sup>, &nbsp; w=(0.5,0.2,0.1)</div>
+              <p>近未来权重最高，远未来提供较弱但密集的轨迹监督。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 24 · VIDEO ICL</span>
+              <div class="formula-text">∏<sub>t</sub>p(z<sub>t+1</sub>|z<sub>≤t</sub>,a<sub>&lt;t</sub>,z<sub>icl</sub>)p(a<sub>t</sub>|z<sub>≤t</sub>,a<sub>&lt;t</sub>,z<sub>t+1</sub>,z<sub>icl</sub>)</div>
+              <p>整段示范 latent 对每个机器人 prediction step 可见。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 25 · HUMAN ACTION RETARGETING</span>
+              <div class="formula-text">a<sup>H</sup>=Φ(ã<sup>H</sup>)∈A</div>
+              <p>双手 root pose + finger joints 被映射到 robot-compatible end-effector slice。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 26 · DOMAIN ACTION HEAD</span>
+              <div class="formula-text">â<sub>t</sub><sup>(d)</sup>=P<sub>d</sub>(v<sup>act</sup>(z<sub>≤t</sub>,E<sub>d</sub>(a<sub>&lt;t</sub>),ẑ<sub>t+1</sub>))</div>
+              <p>d∈{R,H}；世界主干共享，动作 codec 按域分离。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 27 · CO-TRAINING LOSS</span>
+              <div class="formula-text">L<sub>co-train</sub>=E<sub>D<sub>R</sub></sub>[L<sub>vid</sub>+L<sub>act</sub><sup>R</sup>]+E<sub>D<sub>H</sub></sub>[L<sub>vid</sub>+L<sub>act</sub><sup>H</sup>]</div>
+              <p>人类与机器人数据都更新共享视频/动作专家。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 28 · TASK MIXTURE</span>
+              <div class="formula-text">L(τ)=Σ<sub>i∈T</sub>π<sub>i</sub>(τ)L<sub>i</sub>, &nbsp; π<sub>i</sub>≥0, &nbsp; Σ<sub>i</sub>π<sub>i</sub>=1</div>
+              <p>随训练进度从 T2I/T2V 移向 TI2VA/ICL/HCT，但旧任务保持非零权重。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="formula-group">
+          <h3>E · Foresight grounding 与 consistency distillation</h3>
+          <div class="formula-cards">
+            <div class="formula-card">
+              <span class="formula-no">EQ. 29 · ONLINE FDM</span>
+              <div class="formula-text">ẑ<sub>t+1</sub>=FDM<sub>θ</sub>(C<sub>t</sub>∪{a<sub>t</sub>})=v<sub>θ</sub><sup>vid</sup>(z<sub>≤t</sub>,a<sub>≤t</sub>)</div>
+              <p>当前动作执行时，由策略主干提前想象它造成的视觉结果。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 30 · FDM GROUNDING LOSS</span>
+              <div class="formula-text">L<sub>FDM</sub>=E‖v<sup>vid</sup>(z<sub>t+1</sub><sup>(s)</sup>,s|z<sub>≤t</sub>,a<sub>≤t</sub>)−(z<sub>t+1</sub>−ε)‖²</div>
+              <p>显式加入当前已执行动作 a<sub>t</sub>，匹配异步部署条件。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 31 · TEACHER EULER STEP</span>
+              <div class="formula-text">x̂<sup>(s<sub>n+1</sub>)</sup>=x<sup>(s<sub>n</sub>)</sup>+(s<sub>n+1</sub>−s<sub>n</sub>)v<sub>θ</sub>(x<sup>(s<sub>n</sub>)</sup>,s<sub>n</sub>)</div>
+              <p>冻结 flow teacher 沿 PF-ODE 向数据端推进一小步。</p>
+            </div>
+            <div class="formula-card">
+              <span class="formula-no">EQ. 32 · CONSISTENCY DISTILLATION</span>
+              <div class="formula-text">L<sub>CD</sub>=E d(f<sub>ξ</sub>(x<sup>(s<sub>n</sub>)</sup>,s<sub>n</sub>),f<sub>ξ−</sub>(x̂<sup>(s<sub>n+1</sub>)</sup>,s<sub>n+1</sub>))</div>
+              <p>同一轨迹任意点都应指向同一 clean endpoint；最终视频与动作各 2 steps。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="ending">
+          <h2>最后把整篇论文压成一条闭环</h2>
+          <p>语义 tokenizer 先把世界与变化压成可控表示；causal DiT 用网页视频、人类视频和机器人轨迹学习未来；MCP 迫使它看得更远；MoE 给视觉动态足够容量；planner 负责长时语义；Foresight 在执行时先想一步，再让真实观测把想象纠正。</p>
+          <p>真正的分水岭不是“模型会不会生成未来”，而是这个未来是否被动作解释、是否遵守因果、是否足够快，以及是否愿意在现实反馈面前立即改口。</p>
+        </div>
+
+        <div class="source-list">
+          <h3>主要来源</h3>
+          <ul>
+            <li><a href="https://arxiv.org/pdf/2607.06403" target="_blank" rel="noopener">Native Video-Action Pretraining for Generalizable Robot Control</a>，29 页；方法与实验正文至第 22 页，参考文献第 23–29 页。</li>
+            <li><a href="https://technology.robbyant.com/lingbot-va-v2" target="_blank" rel="noopener">LingBot-VA 2.0 官方项目页</a>：动态任务演示、Foresight / ICL / Planner 能力图、交互式成功率结果。</li>
+            <li><a href="https://github.com/Robbyant/lingbot-va/blob/main/LingBot_VA2_paper.pdf" target="_blank" rel="noopener">官方 GitHub 技术报告</a>。</li>
+          </ul>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="page-footer">
+    <strong>LingBot-VA 2.0 · Native Video-Action Pretraining</strong><br />
+    一篇关于表示、因果、容量、数据与闭环部署如何共同决定机器人策略上限的深度阅读。
+  </footer>
+
+  <div class="lightbox" id="image-dialog" role="dialog" aria-modal="true" aria-hidden="true" aria-label="论文图像放大预览">
+    <button type="button" aria-label="关闭图像预览">×</button>
+    <img alt="" />
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var progress = document.getElementById("reading-progress");
+      var ticking = false;
+
+      function updateProgress() {
+        var root = document.documentElement;
+        var scrollable = root.scrollHeight - root.clientHeight;
+        var value = scrollable > 0 ? (root.scrollTop / scrollable) * 100 : 0;
+        progress.style.width = Math.max(0, Math.min(100, value)) + "%";
+        ticking = false;
+      }
+
+      function requestProgress() {
+        if (!ticking) {
+          ticking = true;
+          window.requestAnimationFrame(updateProgress);
+        }
+      }
+
+      window.addEventListener("scroll", requestProgress, { passive: true });
+      window.addEventListener("resize", requestProgress);
+      updateProgress();
+
+      var tocLinks = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+      var sections = Array.prototype.slice.call(document.querySelectorAll("article section[id]"));
+      var navTicking = false;
+
+      function updateCurrentSection() {
+        var probe = window.scrollY + window.innerHeight * 0.28;
+        var currentId = sections.length ? sections[0].id : "";
+
+        sections.forEach(function (section) {
+          if (section.offsetTop <= probe) currentId = section.id;
+        });
+
+        tocLinks.forEach(function (link) {
+          if (link.getAttribute("href") === "#" + currentId) {
+            link.setAttribute("aria-current", "true");
+          } else {
+            link.removeAttribute("aria-current");
+          }
+        });
+        navTicking = false;
+      }
+
+      function requestCurrentSection() {
+        if (!navTicking) {
+          navTicking = true;
+          window.requestAnimationFrame(updateCurrentSection);
+        }
+      }
+
+      window.addEventListener("scroll", requestCurrentSection, { passive: true });
+      window.addEventListener("resize", requestCurrentSection);
+      window.addEventListener("hashchange", requestCurrentSection);
+      updateCurrentSection();
+
+      var mobileToc = document.querySelector(".mobile-toc");
+      if (mobileToc) {
+        mobileToc.querySelectorAll("a").forEach(function (link) {
+          link.addEventListener("click", function () {
+            mobileToc.removeAttribute("open");
+          });
+        });
+      }
+
+      var dialog = document.getElementById("image-dialog");
+      var dialogImage = dialog.querySelector("img");
+      var closeButton = dialog.querySelector("button");
+      var lastFocus = null;
+      var zoomImages = document.querySelectorAll(".figure img, .gallery-card img");
+
+      function openDialog(image) {
+        lastFocus = document.activeElement;
+        dialogImage.src = image.currentSrc || image.src;
+        dialogImage.alt = image.alt || "";
+        dialog.classList.add("open");
+        dialog.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        closeButton.focus();
+      }
+
+      function closeDialog() {
+        if (!dialog.classList.contains("open")) return;
+        dialog.classList.remove("open");
+        dialog.setAttribute("aria-hidden", "true");
+        dialogImage.src = "";
+        dialogImage.alt = "";
+        document.body.style.overflow = "";
+        if (lastFocus && typeof lastFocus.focus === "function") {
+          lastFocus.focus();
+        }
+      }
+
+      zoomImages.forEach(function (image) {
+        image.setAttribute("tabindex", "0");
+        image.setAttribute("role", "button");
+        image.setAttribute("aria-label", (image.alt || "图像") + "，按 Enter 放大");
+        image.addEventListener("click", function () { openDialog(image); });
+        image.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openDialog(image);
+          }
+        });
+      });
+
+      closeButton.addEventListener("click", closeDialog);
+      dialog.addEventListener("click", function (event) {
+        if (event.target === dialog) closeDialog();
+      });
+      document.addEventListener("keydown", function (event) {
+        if (!dialog.classList.contains("open")) return;
+        if (event.key === "Escape") {
+          closeDialog();
+        } else if (event.key === "Tab") {
+          event.preventDefault();
+          closeButton.focus();
+        }
+      });
+    }());
+  </script>
+</body>
+</html>
