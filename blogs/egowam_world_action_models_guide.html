@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="EgoWAM 论文深度解读：从人机动作鸿沟、World Action Model、DINO 与 3D Flow，到真实机器人实验与方法边界。" />
+  <title>EgoWAM：人类视频如何通过世界变化教会机器人</title>
+  <style>
+    :root {
+      --page: #f2f5f2;
+      --surface: #ffffff;
+      --ink: #171b19;
+      --muted: #5f6964;
+      --line: #cfd6d1;
+      --line-strong: #929d96;
+      --teal: #12766f;
+      --teal-soft: #e0f0ed;
+      --coral: #c94e36;
+      --coral-soft: #f7e6e1;
+      --amber: #d69718;
+      --amber-soft: #f8edcf;
+      --blue: #315f88;
+      --blue-soft: #e4edf4;
+      --green: #54795e;
+      --green-soft: #e6eee8;
+      --dark: #111513;
+      --serif: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", Georgia, serif;
+      --sans: "Avenir Next", "Noto Sans CJK SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --mono: "SFMono-Regular", "Menlo", "Consolas", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 24px;
+      background: var(--page);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.82;
+      letter-spacing: 0;
+    }
+
+    a {
+      color: var(--teal);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    button {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    code {
+      padding: 0.08em 0.3em;
+      color: #244a45;
+      background: #e9efec;
+      border: 1px solid #d5dfda;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 0.88em;
+    }
+
+    #reading-progress {
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: var(--amber);
+    }
+
+    .hero {
+      position: relative;
+      min-height: 72vh;
+      display: grid;
+      align-items: end;
+      overflow: hidden;
+      color: #fff;
+      background: var(--dark);
+      isolation: isolate;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      z-index: -2;
+      inset: 0;
+      background: url("egowam_assets/rollout_cases.png") center 33% / cover no-repeat;
+      transform: scale(1.015);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      background: rgba(9, 13, 11, 0.72);
+    }
+
+    .hero-inner {
+      width: min(1180px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 96px 0 56px;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: #f2c65f;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 980px;
+      margin: 0;
+      font-size: 68px;
+      line-height: 1.08;
+      font-weight: 800;
+    }
+
+    .hero-subtitle {
+      max-width: 820px;
+      margin: 22px 0 0;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 23px;
+      line-height: 1.55;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 26px;
+      font-family: var(--sans);
+      font-size: 13px;
+    }
+
+    .hero-meta span {
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 236px minmax(0, 900px);
+      gap: 46px;
+      width: min(1220px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 56px 0 100px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 16px 0 16px 17px;
+      border-left: 2px solid var(--line);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .toc-title {
+      margin: 0 0 12px;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .toc a {
+      display: block;
+      margin: 8px 0;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .toc a:hover,
+    .toc a.active {
+      color: var(--teal);
+    }
+
+    .toc a.active {
+      font-weight: 700;
+    }
+
+    article {
+      min-width: 0;
+    }
+
+    .credit {
+      margin: 0 0 52px;
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .credit p {
+      margin: 2px 0;
+    }
+
+    section {
+      margin: 0 0 78px;
+      scroll-margin-top: 24px;
+    }
+
+    h2 {
+      margin: 0 0 22px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 32px;
+      line-height: 1.3;
+    }
+
+    h3 {
+      margin: 34px 0 12px;
+      font-size: 23px;
+      line-height: 1.4;
+    }
+
+    h4 {
+      margin: 0 0 8px;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    p {
+      margin: 0 0 16px;
+    }
+
+    .lead {
+      color: #28302c;
+      font-size: 21px;
+      line-height: 1.72;
+    }
+
+    .tldr {
+      padding: 24px 26px;
+      border-left: 5px solid var(--teal);
+      background: var(--teal-soft);
+    }
+
+    .tldr h2 {
+      padding: 0;
+      border: 0;
+    }
+
+    .tldr ul,
+    .plain-list {
+      margin: 0;
+      padding-left: 1.3em;
+    }
+
+    .tldr li,
+    .plain-list li {
+      margin: 8px 0;
+    }
+
+    .pullquote {
+      margin: 32px 0;
+      padding: 26px 30px;
+      color: #f6f8f6;
+      background: var(--dark);
+      border-left: 6px solid var(--amber);
+      font-size: 23px;
+      line-height: 1.58;
+    }
+
+    .callout {
+      margin: 24px 0;
+      padding: 18px 20px;
+      border-left: 4px solid var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .callout.warn {
+      border-color: var(--coral);
+      background: var(--coral-soft);
+    }
+
+    .callout.good {
+      border-color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .callout p:last-child {
+      margin-bottom: 0;
+    }
+
+    .figure {
+      margin: 30px 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .figure img {
+      width: 100%;
+      height: auto;
+      cursor: zoom-in;
+    }
+
+    figcaption {
+      padding: 11px 6px 2px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: left;
+    }
+
+    .figure-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 28px 0;
+    }
+
+    .figure-pair .figure {
+      margin: 0;
+    }
+
+    .wide-figure {
+      width: min(1120px, calc(100vw - 64px));
+      margin-left: min(0px, calc((900px - 1120px) / 2));
+    }
+
+    .lineage {
+      margin: 28px 0;
+      border-top: 1px solid var(--line-strong);
+    }
+
+    .lineage-row {
+      display: grid;
+      grid-template-columns: 168px 1fr;
+      gap: 22px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .lineage-row strong {
+      color: var(--teal);
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+
+    .lineage-row p {
+      margin: 0;
+    }
+
+    .equation {
+      position: relative;
+      margin: 24px 0;
+      padding: 22px 22px 18px;
+      overflow-x: auto;
+      border-left: 5px solid var(--teal);
+      background: var(--surface);
+      box-shadow: 0 8px 28px rgba(28, 42, 35, 0.06);
+      font-family: "Times New Roman", var(--serif);
+      font-size: 21px;
+      line-height: 1.7;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .equation-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .equation-note {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.55;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .three-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      margin: 28px 0;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .three-steps > div {
+      min-width: 0;
+      padding: 20px;
+      border-right: 1px solid var(--line);
+    }
+
+    .three-steps > div:last-child {
+      border-right: 0;
+    }
+
+    .step-index {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--coral);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .target-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 28px 0;
+    }
+
+    .target-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .target-card .visuals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      aspect-ratio: 2 / 1;
+      overflow: hidden;
+      background: #e8ece9;
+    }
+
+    .target-card .visuals img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .target-copy {
+      padding: 16px;
+    }
+
+    .target-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .target-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-family: var(--sans);
+      font-weight: 800;
+    }
+
+    .target-mark {
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #fff;
+      background: var(--teal);
+      font-size: 11px;
+    }
+
+    .desiderata {
+      width: 100%;
+      margin: 26px 0;
+      border-collapse: collapse;
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+
+    .desiderata th,
+    .desiderata td {
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .desiderata th {
+      background: #e8ece9;
+    }
+
+    .yes {
+      color: var(--teal);
+      font-weight: 800;
+    }
+
+    .partial {
+      color: var(--amber);
+      font-weight: 800;
+    }
+
+    .no {
+      color: var(--coral);
+      font-weight: 800;
+    }
+
+    .spec-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      margin: 26px 0;
+      border-top: 1px solid var(--line-strong);
+    }
+
+    .spec {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 12px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .spec:nth-child(odd) {
+      padding-right: 18px;
+    }
+
+    .spec:nth-child(even) {
+      padding-left: 18px;
+      border-left: 1px solid var(--line);
+    }
+
+    .spec dt {
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 13px;
+    }
+
+    .spec dd {
+      margin: 0;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .flow-line {
+      display: grid;
+      grid-template-columns: 1fr 42px 1fr 42px 1fr;
+      align-items: stretch;
+      margin: 28px 0;
+    }
+
+    .flow-node {
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .flow-node b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--teal);
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+
+    .flow-arrow {
+      display: grid;
+      place-items: center;
+      color: var(--line-strong);
+      font-family: var(--sans);
+      font-size: 24px;
+    }
+
+    .table-wrap {
+      margin: 26px 0;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+
+    table.data th,
+    table.data td {
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    table.data th {
+      background: #e8ece9;
+      font-weight: 800;
+    }
+
+    table.data tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin: 28px 0 34px;
+      border-top: 1px solid var(--line-strong);
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .metric {
+      padding: 20px 16px;
+      border-right: 1px solid var(--line);
+    }
+
+    .metric:last-child {
+      border-right: 0;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--teal);
+      font-family: var(--sans);
+      font-size: 27px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .result-tool {
+      margin: 30px 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .tool-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .tool-head h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #edf1ee;
+    }
+
+    .segmented button {
+      min-height: 34px;
+      padding: 5px 10px;
+      color: var(--muted);
+      border: 0;
+      border-radius: 3px;
+      background: transparent;
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .segmented button.active {
+      color: #fff;
+      background: var(--teal);
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--sans);
+      font-size: 13px;
+      table-layout: fixed;
+    }
+
+    .result-table th,
+    .result-table td {
+      padding: 10px 8px;
+      border-top: 1px solid var(--line);
+      text-align: right;
+    }
+
+    .result-table th:first-child,
+    .result-table td:first-child {
+      text-align: left;
+    }
+
+    .gain-positive {
+      color: var(--teal);
+      font-weight: 800;
+    }
+
+    .gain-negative {
+      color: var(--coral);
+      font-weight: 800;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 7px;
+      margin-top: 5px;
+      overflow: hidden;
+      background: #e2e7e3;
+      border-radius: 3px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--amber);
+      border-radius: 3px;
+    }
+
+    .critique-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin: 28px 0;
+    }
+
+    .critique-column {
+      padding-top: 16px;
+      border-top: 4px solid var(--teal);
+    }
+
+    .critique-column.caution {
+      border-color: var(--coral);
+    }
+
+    .critique-column ul {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+
+    .critique-column li {
+      margin: 10px 0;
+    }
+
+    .ending {
+      margin-top: 40px;
+      padding: 30px;
+      color: #f5f8f5;
+      background: var(--dark);
+      border-top: 6px solid var(--amber);
+    }
+
+    .ending h2 {
+      padding: 0;
+      border: 0;
+      color: #fff;
+    }
+
+    .ending p:last-child {
+      margin-bottom: 0;
+      color: #f2c65f;
+      font-size: 21px;
+    }
+
+    .footer-note {
+      margin-top: 46px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .lightbox {
+      position: fixed;
+      z-index: 1100;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 52px;
+      background: rgba(5, 8, 7, 0.92);
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 96vw;
+      max-height: 90vh;
+      object-fit: contain;
+      background: #fff;
+    }
+
+    .lightbox button {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      width: 38px;
+      height: 38px;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    @media (max-width: 1120px) {
+      h1 {
+        font-size: 56px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        max-height: none;
+        padding: 16px;
+        border: 1px solid var(--line);
+      }
+
+      .toc-title {
+        grid-column: 1 / -1;
+      }
+
+      .wide-figure {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        font-size: 16px;
+      }
+
+      .hero {
+        min-height: 68vh;
+      }
+
+      .hero-inner,
+      .layout {
+        width: min(100% - 28px, 900px);
+      }
+
+      h1 {
+        font-size: 40px;
+        line-height: 1.12;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+      }
+
+      .layout {
+        padding-top: 30px;
+      }
+
+      .toc {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      h2 {
+        font-size: 26px;
+      }
+
+      h3 {
+        font-size: 21px;
+      }
+
+      .lead,
+      .pullquote {
+        font-size: 19px;
+      }
+
+      .figure-pair,
+      .target-grid,
+      .critique-grid,
+      .spec-grid,
+      .three-steps {
+        grid-template-columns: 1fr;
+      }
+
+      .three-steps > div {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .three-steps > div:last-child {
+        border-bottom: 0;
+      }
+
+      .spec:nth-child(odd),
+      .spec:nth-child(even) {
+        padding-right: 0;
+        padding-left: 0;
+        border-left: 0;
+      }
+
+      .lineage-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+
+      .flow-line {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-arrow {
+        height: 36px;
+        transform: rotate(90deg);
+      }
+
+      .metric-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric:nth-child(2) {
+        border-right: 0;
+      }
+
+      .metric:nth-child(-n + 2) {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .tool-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .segmented {
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      .result-table {
+        min-width: 560px;
+      }
+
+      .result-tool {
+        overflow-x: auto;
+      }
+
+      .equation {
+        font-size: 18px;
+        text-align: left;
+      }
+
+      .lightbox {
+        padding: 42px 12px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="reading-progress" aria-hidden="true"></div>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Paper Guide · World Action Models · Robot Learning from Human Video</p>
+      <h1>EgoWAM：人类视频如何<br />教机器人理解世界</h1>
+      <p class="hero-subtitle">真正可迁移的不是人的手怎么动，而是杯子、衣服和购物袋怎样随操作发生变化。EgoWAM 用一组严格对照实验，追问世界模型究竟应该预测什么。</p>
+      <div class="hero-meta">
+        <span>Pixel VAE · DINO · 3D Flow</span>
+        <span>Human–Robot Co-training</span>
+        <span>1800 Real-world Rollouts</span>
+        <span>Georgia Tech RL2</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <nav class="toc" aria-label="文章目录">
+      <p class="toc-title">Reading Map</p>
+      <a href="#summary">00 · 先抓住结论</a>
+      <a href="#background">01 · 问题从哪里来</a>
+      <a href="#alignment">02 · 动作如何对齐</a>
+      <a href="#architecture">03 · 两条监督通道</a>
+      <a href="#targets">04 · 世界该表示成什么</a>
+      <a href="#flow">05 · Flow Matching 与 3D Flow</a>
+      <a href="#training">06 · 训练和推理细节</a>
+      <a href="#experiments">07 · 实验如何设计</a>
+      <a href="#results">08 · 主结果</a>
+      <a href="#ablations">09 · 消融与因果证据</a>
+      <a href="#simulation">10 · 预训练陷阱与仿真</a>
+      <a href="#critique">11 · 评价与后续方向</a>
+    </nav>
+
+    <article>
+      <div class="credit">
+        <p><strong>解读 by Xinkai Wang（王薪恺）</strong> · 上海创智学院 · 2026</p>
+        <p>原论文：<a href="https://gatech-rl2.github.io/egowam.github.io/EgoWAM.pdf" target="_blank" rel="noopener">EgoWAM: World Action Models Beyond Pixels with In-the-Wild Egocentric Human Data</a> · <a href="https://gatech-rl2.github.io/egowam.github.io/" target="_blank" rel="noopener">项目主页</a></p>
+      </div>
+
+      <section id="summary" class="tldr">
+        <h2>00 · 先抓住结论</h2>
+        <ul>
+          <li><strong>问题：</strong>把人类第一视角示范重定向成机器人动作再做行为克隆，仍会混入人的身体结构、头部晃动、速度和抓握习惯；数据越多不一定越好，甚至会把机器人带偏。</li>
+          <li><strong>关键改动：</strong>在共享 Transformer 上并列放置动作头和世界模型头。动作头学习“机器人该怎么动”，世界模型头学习“场景接下来怎么变”，两者共同塑造共享表征。</li>
+          <li><strong>核心发现：</strong>世界预测的目标比“有没有世界模型”更重要。像素重建迁移较弱；DINO 特征最擅长陌生物体和场景；去除相机自运动的 3D Flow 最擅长精确空间操作。</li>
+          <li><strong>部署方式：</strong>世界模型头只在训练时充当教师，部署时完全丢弃。最终策略只保留共享 trunk 和动作头，以 30 Hz 运行，成本与同规模 BC 策略相同。</li>
+          <li><strong>证据：</strong>三项双臂真实任务、1800 次 rollout、对齐与故意错位的人类数据消融，以及 RoboTwin 四种机器人之间的迁移复验。</li>
+        </ul>
+      </section>
+
+      <section id="background">
+        <h2>01 · 问题从哪里来：人类数据很多，但动作不是通用语言</h2>
+        <p class="lead">机器人数据昂贵，而人类每天都在产生海量第一视角操作视频。难点从来不是“有没有数据”，而是这些视频里哪些东西值得迁移给机器人。</p>
+        <p>一段人类把杯子放到碟子上的视频同时包含两类信息。第一类是可迁移的：杯子在哪里、任务先后关系是什么、什么接触会让杯子移动、最终状态应当是什么。第二类则与人的身体绑定：手腕能如何旋转、手指如何包裹杯壁、头随身体怎样晃动、完成动作的节奏有多快。行为克隆把两类信息都塞进同一个动作目标，于是内容和执行方式被迫纠缠。</p>
+
+        <figure class="figure wide-figure">
+          <img src="egowam_assets/overview.png" alt="EgoWAM 论文总览图，比较行为克隆与世界动作模型，并列出三种世界表征" loading="eager" />
+          <figcaption>论文 Figure 1。上半部分给出人机鸿沟：相机运动、身体结构和行为风格。下半部分把 Pixel、DINO、3D Flow 放在三个标准下比较：外观抽象、跨具身一致性、相机自运动分离。</figcaption>
+        </figure>
+
+        <div class="lineage">
+          <div class="lineage-row">
+            <strong>表征预训练</strong>
+            <p>先用人类视频学习视觉特征，再把特征迁移给机器人策略。优点是规避动作鸿沟，缺点是人类视频没有直接进入下游策略的端到端训练。</p>
+          </div>
+          <div class="lineage-row">
+            <strong>BC 联合训练</strong>
+            <p>把人手轨迹重定向到机器人末端执行器空间，人与机器人共用动作解码器。它利用数据最直接，也最依赖视角、速度、运动学和抓握风格的一致性。</p>
+          </div>
+          <div class="lineage-row">
+            <strong>运动中间量</strong>
+            <p>从视频提取 2D 点轨迹或 3D 运动场，再在测试时把预测运动解码成动作。跨具身更自然，但部署时多出一套运动预测与动作反演链路。</p>
+          </div>
+          <div class="lineage-row">
+            <strong>EgoWAM</strong>
+            <p>场景运动只负责训练共享 trunk，部署时不参与控制。它把“世界如何变化”变成辅助监督，同时保留端到端动作策略的运行成本。</p>
+          </div>
+        </div>
+
+        <div class="pullquote">EgoWAM 的切入点不是寻找更精细的人手到夹爪映射，而是换一条数据进入策略的通道：动作难以共享，物理后果可以共享。</div>
+      </section>
+
+      <section id="alignment">
+        <h2>02 · 先把动作通道做到足够强：14D 对齐不是草率基线</h2>
+        <p>作者没有故意设置一个脆弱的 BC 对手。相反，他们先尽可能消除人机动作的表面差异，再观察剩余的负迁移。机器人和人类最终都被表示为双臂 14 维动作：每只手或机械臂包含 6-DoF 的 <code>SE(3)</code> 末端位姿，加 1 维夹爪开合。</p>
+
+        <div class="three-steps">
+          <div>
+            <span class="step-index">01 · 坐标系</span>
+            <h4>把头动从人手轨迹里剥离</h4>
+            <p>人手位姿原本在不断移动的 Aria 设备坐标系里。作者把未来手位姿重新表达在当前时刻 <em>t</em> 的相机坐标系中，让同一段物理移动不会因为佩戴者转头而得到完全不同的数值。</p>
+          </div>
+          <div>
+            <span class="step-index">02 · 时间尺度</span>
+            <h4>比较任务进度，而非相同秒数</h4>
+            <p>人通常比遥操作机器人更快。人类窗口取 1.0 秒，机器人窗口取 1.5 秒，随后都重采样成 100 个动作点，尽量让两个窗口覆盖相近的语义进度。</p>
+          </div>
+          <div>
+            <span class="step-index">03 · 数值范围</span>
+            <h4>分位数归一化抑制跟踪异常</h4>
+            <p>每个动作维度的第 1 与第 99 百分位映射到 [−1, 1]，避免少量手部跟踪离群点决定整个动作空间的尺度。</p>
+          </div>
+        </div>
+
+        <div class="equation">
+          <span class="equation-label">人类动作重表达</span>
+          a<sup>H</sup><sub>t:t+k</sub> =
+          [(T<sup>device</sup><sub>t</sub>)<sup>−1</sup>
+          T<sup>device</sup><sub>t+i</sub>
+          p<sup>H</sup><sub>t+i</sub>]<sup>k</sup><sub>i=1</sub>
+          <span class="equation-note">左侧是训练使用的动作块；右侧先把未来手位姿带到统一参考系，再相对当前设备坐标表达。它消除了坐标意义上的头动，但不能消除人的抓握策略和机器人夹爪能力之间的差异。</span>
+        </div>
+
+        <div class="equation">
+          <span class="equation-label">强 BC 联合训练基线</span>
+          ℒ<sub>BC-cotrain</sub> = ℒ<sup>robot</sup><sub>CFM</sub> + ℒ<sup>human</sup><sub>CFM</sub>
+          <span class="equation-note">两种具身共享编码器和动作解码器，动作损失均采用 Conditional Flow Matching。后续 WAM 的收益是在这条已经对齐过的动作通道之上测得的。</span>
+        </div>
+
+        <div class="callout warn">
+          <h4>仍然无法靠坐标变换解决的差异</h4>
+          <p>人可以侧握杯子、用手指勾住袋口，机器人却只有平行夹爪；人会一边转头一边操作，机器人头部相机固定；人和遥操作机器人的动作节奏也不同。坐标变换能让数值可比，却不能把不可执行的动作变成可执行动作。</p>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2>03 · EgoWAM 架构：共享 trunk 上的两条监督通道</h2>
+        <p>EgoWAM 建立在 Heterogeneous Pretrained Transformer（HPT）之上。不同具身先通过各自的浅层 stem 进入同一个 256 维 token 空间：人和机器人共享头部第一视角视觉 stem；机器人额外拥有腕部相机 stem 和本体状态 stem。共享 Transformer trunk 同时处理观察 token、64 个可学习动作 token 和 16 个未来 token。</p>
+
+        <figure class="figure wide-figure">
+          <img src="egowam_assets/method.png" alt="EgoWAM 模型架构和三种可替换世界模型头" loading="lazy" />
+          <figcaption>论文 Figure 2。动作头与世界模型头从同一 trunk 读取不同 token。红色虚线表示两项损失都会反向传播到共享 trunk；右侧三种 head 对应三种不同的未来表征。</figcaption>
+        </figure>
+
+        <div class="equation">
+          <span class="equation-label">给定共享表征后的双头分解</span>
+          p<sub>θ,ψ</sub>(a<sub>t:t+k</sub>, s<sub>t+T</sub> | o<sub>t</sub>)
+          = p<sub>ψ</sub>(s<sub>t+T</sub> | z<sub>t</sub>)
+          p<sub>θ</sub>(a<sub>t:t+k</sub> | z<sub>t</sub>),
+          &nbsp; z<sub>t</sub> = f<sub>ϕ</sub>(o<sub>t</sub>)
+          <span class="equation-note">动作和未来状态不是一前一后串联生成，而是从同一共享表征并行读出。世界头的主要作用是改变 z<sub>t</sub> 学到了什么。</span>
+        </div>
+
+        <div class="flow-line">
+          <div class="flow-node">
+            <b>具身专属输入</b>
+            人类：ego RGB 与手部状态。机器人：ego RGB、双腕 RGB、14D 本体状态。
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <b>共享 Transformer</b>
+            16 blocks、256 hidden、8 heads。不同域用 learned domain embedding 区分。
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <b>两种训练信号</b>
+            动作头约束可执行行为；世界头约束未来场景和任务相关动力学。
+          </div>
+        </div>
+
+        <div class="equation">
+          <span class="equation-label">端到端联合目标</span>
+          ℒ<sub>EgoWAM</sub> =
+          ℒ<sup>robot</sup><sub>action</sub> + ℒ<sup>human</sup><sub>action</sub>
+          + λ(ℒ<sup>robot</sup><sub>world</sub> + ℒ<sup>human</sup><sub>world</sub>),
+          &nbsp; λ = 1
+          <span class="equation-note">即使人类动作标签会把策略拉向错误执行方式，人类视频仍能通过 world loss 教 trunk 识别物体、场景和操作后果。</span>
+        </div>
+
+        <div class="callout good">
+          <h4>训练时“想象未来”，推理时不做视频 rollout</h4>
+          <p>部署时世界模型头被直接移除，只运行 trunk 和动作头。这更接近多任务学习中的辅助任务：未来预测是训练表征的教师，不是在线规划器。因而实验差异可以归因于训练时学到的表征，而不是推理时某个方法使用了更多计算。</p>
+        </div>
+      </section>
+
+      <section id="targets">
+        <h2>04 · 世界应该表示成什么：Pixel、DINO 与 3D Flow</h2>
+        <p>论文最重要的控制变量是 <em>s<sub>t+T</sub></em>，也就是世界模型头到底预测什么。作者提出三个标准：</p>
+        <ul class="plain-list">
+          <li><strong>D1 外观抽象：</strong>不应为了逐像素重建，浪费容量记住光照、纹理、人的手和机器人的夹爪长什么样。</li>
+          <li><strong>D2 跨具身一致：</strong>如果人手与夹爪都让杯子向右移动，它们应该收到相似的监督，而不是因为执行者外观不同被拉到两个表征空间。</li>
+          <li><strong>D3 自运动分离：</strong>人转头造成的整幅画面移动不应被误认成环境发生了物理变化。</li>
+        </ul>
+
+        <table class="desiderata">
+          <thead>
+            <tr>
+              <th>目标</th>
+              <th>D1 外观抽象</th>
+              <th>D2 跨具身一致</th>
+              <th>D3 去除头动</th>
+              <th>最直接的归纳偏置</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Pixel VAE</strong></td>
+              <td class="no">弱</td>
+              <td class="no">弱</td>
+              <td class="no">弱</td>
+              <td>保留可重建的视觉细节</td>
+            </tr>
+            <tr>
+              <td><strong>DINO</strong></td>
+              <td class="yes">强</td>
+              <td class="yes">强</td>
+              <td class="partial">部分</td>
+              <td>保留物体与场景语义</td>
+            </tr>
+            <tr>
+              <td><strong>3D Flow</strong></td>
+              <td class="yes">强</td>
+              <td class="yes">强</td>
+              <td class="yes">强</td>
+              <td>保留物体在三维空间的运动</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="target-grid">
+          <div class="target-card">
+            <div class="visuals">
+              <img src="egowam_assets/pixel_robot.jpg" alt="机器人像素目标示例" loading="lazy" />
+              <img src="egowam_assets/pixel_human.jpg" alt="人类像素目标示例" loading="lazy" />
+            </div>
+            <div class="target-copy">
+              <div class="target-name">Pixel VAE <span class="target-mark" style="background:#c94e36">重建</span></div>
+              <p>未来帧缩放到 128×128，再由冻结的 Wan VAE 编码成 16×16×16 latent。它保留最多视觉信息，也最容易把外观和头动带入共享 trunk。</p>
+            </div>
+          </div>
+          <div class="target-card">
+            <div class="visuals">
+              <img src="egowam_assets/dino_robot.png" alt="机器人 DINO 特征目标示例" loading="lazy" />
+              <img src="egowam_assets/dino_human.png" alt="人类 DINO 特征目标示例" loading="lazy" />
+            </div>
+            <div class="target-copy">
+              <div class="target-name">DINO / RAE <span class="target-mark">语义</span></div>
+              <p>预测 DINOv2-B 的 16×16×768 patch feature。语义空间不必复原每块纹理，但仍按图像网格排列，所以相机转动依然会搬动整张特征图。</p>
+            </div>
+          </div>
+          <div class="target-card">
+            <div class="visuals">
+              <img src="egowam_assets/flow_robot.jpg" alt="机器人 3D Flow 目标示例" loading="lazy" />
+              <img src="egowam_assets/flow_human.jpg" alt="人类 3D Flow 目标示例" loading="lazy" />
+            </div>
+            <div class="target-copy">
+              <div class="target-name">3D Flow <span class="target-mark" style="background:#315f88">几何</span></div>
+              <p>在固定像素锚点上预测三维位移，并用相机位姿把未来点变换回当前相机坐标系。背景趋近零流，真正被操作的物体保留运动。</p>
+            </div>
+          </div>
+        </div>
+
+        <h3>Pixel：清晰不等于可迁移</h3>
+        <p>Pixel 版本用 6 层、384 hidden、6 heads 的轻量 DiT 从头训练；Pixel-PT 则使用预训练 VACE-1.3B，拥有 30 层、1536 hidden 和 8960 FFN。两者预测相同的 VAE latent，因此可以检验“更强的视频先验能否补救像素目标”。实验给出的答案很克制：它能改善部分任务，但并没有消除像素表征的跨具身问题，有时还会带来先验幻觉。</p>
+
+        <h3>DINO：把“长得一样”换成“语义上是同一个东西”</h3>
+        <p>DINO 目标丢弃 <code>[CLS]</code> 与 register token，对每个 patch token 做 LayerNorm。预测头沿用 RAE 的 DiT<sub>DH</sub>：6 层 384 维 backbone 后接 2 层 2048 维宽头。宽头并非装饰，因为每个 DINO token 有 768 个通道；若 denoiser 的宽度长期低于特征维度，语义 latent 上的流匹配很难收敛。</p>
+
+        <h3>3D Flow：只留下“哪里发生了多少物理位移”</h3>
+        <p>Track4World 从 RGB 序列估计密集三维点轨迹、深度、相机内参和相机位姿。EgoWAM 再结合 Aria VIO 位姿，把所有未来点重新表达在时刻 <em>t</em> 的相机坐标中。人转头时，静止桌面不再产生大范围假运动；杯子被拿起时，它仍具有真实三维位移。</p>
+      </section>
+
+      <section id="flow">
+        <h2>05 · Flow Matching 与相机稳定 3D Flow，具体在学什么</h2>
+        <p>动作头和三种世界模型头都使用一条线性 flow path。训练时随机取一个时间 <em>τ</em>，把高斯噪声与真实目标按比例混合；网络学习沿这条路径把噪声推向数据。它和扩散模型相似，但目标可以直接写成从噪声到数据的速度场。</p>
+
+        <div class="equation">
+          <span class="equation-label">所有世界模型头共享的线性路径</span>
+          s<sup>τ</sup> = (1 − τ)ε + τs,
+          &nbsp; τ ∈ [0,1],
+          &nbsp; ε ∼ 𝒩(0,I)
+          <span class="equation-note">τ=0 时是纯噪声，τ=1 时是真实未来目标。三种方法的路径形式一致，差别在 s 是像素 latent、DINO 特征还是 3D 运动场。</span>
+        </div>
+
+        <p>动作头的时间 <em>τ</em> 从 Beta(1.5, 1.0) 采样，使训练更偏向靠近数据端的区域。动作解码器是 6 层 CrossTransformer，交替使用 self-attention 处理动作块内部关系，再用 cross-attention 读取 trunk 条件；最终以 50 个 v-prediction 步生成长度为 100 的动作块。</p>
+
+        <div class="equation">
+          <span class="equation-label">3D Flow 的自运动消除</span>
+          X̃<sub>t+T</sub> =
+          (T<sup>cam</sup><sub>t</sub>)<sup>−1</sup>
+          T<sup>cam</sup><sub>t+T</sub>
+          X<sub>t+T</sub>,
+          &nbsp;
+          F<sub>[t,t+T]</sub> = X̃<sub>t+T</sub> − X<sub>t</sub>
+          <span class="equation-note">先用两时刻的相机位姿把未来三维点拉回当前相机坐标，再与当前点相减。这个变换不是简单减去一条光流，而是在三维坐标系里抵消相机刚体运动。</span>
+        </div>
+
+        <div class="figure-pair">
+          <figure class="figure">
+            <img src="egowam_assets/grid_robot.png" alt="机器人画面上的 3D Flow 锚点网格" loading="lazy" />
+            <figcaption>机器人头部相机固定，坐标变换近似恒等；规则 28×40 网格提供 1120 个锚点。</figcaption>
+          </figure>
+          <figure class="figure">
+            <img src="egowam_assets/grid_human.png" alt="人类第一视角画面上的 3D Flow 锚点网格" loading="lazy" />
+            <figcaption>人类视频存在明显头动，VIO 稳定后，锚点的位移才更接近物体真实运动。</figcaption>
+          </figure>
+        </div>
+
+        <p>最终 3D Flow target 的形状是 <code>100 × 1120 × 3</code>：100 个时间点、1120 个空间锚点、每点三维位移，不做子采样。为减少跟踪噪声，机器人位移小于 2 mm 的锚点会被过滤；人类视频阈值放宽到 10 mm，并跳过每段视频首尾各 20 帧。</p>
+
+        <div class="callout">
+          <h4>为什么 3D Flow 在空间操作上占优</h4>
+          <p>像素与 DINO 都在问“未来画面是什么样”；3D Flow 直接问“哪些三维点移动了多少”。对杯子是否准确落在碟子中心、夹爪是否覆盖整个工作空间，这种目标和控制所需的几何量更接近。</p>
+        </div>
+      </section>
+
+      <section id="training">
+        <h2>06 · 训练与推理细节：世界头很重，但部署时不留下</h2>
+        <div class="spec-grid">
+          <dl class="spec"><dt>共享 trunk</dt><dd>256 dim · 16 blocks · 8 heads</dd></dl>
+          <dl class="spec"><dt>查询 token</dt><dd>64 action + 16 future</dd></dl>
+          <dl class="spec"><dt>观察历史</dt><dd>单帧</dd></dl>
+          <dl class="spec"><dt>动作块</dt><dd>100 × 14D</dd></dl>
+          <dl class="spec"><dt>动作窗口</dt><dd>Robot 1.5 s · Human 1.0 s</dd></dl>
+          <dl class="spec"><dt>采样步数</dt><dd>Action / World 均为 50 steps</dd></dl>
+          <dl class="spec"><dt>每步 batch</dt><dd>32 robot + 32 human</dd></dl>
+          <dl class="spec"><dt>优化器</dt><dd>AdamW · lr 1e−4 · wd 1e−4</dd></dl>
+          <dl class="spec"><dt>训练精度</dt><dd>bf16</dd></dl>
+          <dl class="spec"><dt>部署设备</dt><dd>RTX 4090 · 30 Hz</dd></dl>
+        </div>
+
+        <p>除 Pixel-PT 外，各版本在单张 NVIDIA L40S 上训练 2000 个“100-step epoch”，即 20 万个更新步；Pixel-PT 因 1.3B 预测头显存更高，使用 2 张 L40S 数据并行训练 1000×100 步。每个任务、每种方法约需两天。这里的 epoch 更像固定长度训练单元，不应按“完整遍历一次数据集”理解。</p>
+        <p>虽然 EgoVerse 的数据总量约为机器人数据的 10 倍，但每个优化步仍固定取 32 个人类样本与 32 个机器人样本。大数据带来的优势主要是人类 batch 重复更少、场景和物体覆盖更广，而不是人类梯度在数量上压倒机器人梯度。</p>
+
+        <div class="flow-line">
+          <div class="flow-node">
+            <b>训练</b>
+            stems、trunk、动作头、世界头全部参与前向；action loss 与 world loss 同时更新共享 trunk。
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <b>冻结世界教师</b>
+            训练结束后不再需要生成未来像素、DINO 特征或 3D Flow。
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <b>部署</b>
+            单帧观察进入 trunk；动作头生成 100 点动作块，以 30 Hz 控制双臂。
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <h4>它不是常见的 action-conditioned simulator</h4>
+          <p>论文公式把动作与未来状态写成给定 z 后的并行输出，世界头并不接收某条候选动作再模拟后果。因此 EgoWAM 的主要贡献是训练期 representation shaping，而不是在测试时用世界模型搜索动作。</p>
+        </div>
+      </section>
+
+      <section id="experiments">
+        <h2>07 · 实验设计：三个任务、三种数据规模、两类 OOD</h2>
+
+        <figure class="figure">
+          <img src="egowam_assets/platform.png" alt="EgoWAM 机器人平台、自然人类示范与机器人对齐示范" loading="lazy" />
+          <figcaption>论文 Figure 10。左：双 ARX5、头戴 Aria 与双腕 RealSense D405 的遥操作平台。中：自然人类示范。右：刻意模仿机器人高度、视角和抓握方式的对齐示范。</figcaption>
+        </figure>
+
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>任务</th>
+                <th>机器人数据</th>
+                <th>同域人类</th>
+                <th>EgoVerse</th>
+                <th>成功条件</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Cup-on-Saucer</strong></td>
+                <td>300 demos / 2.5 h</td>
+                <td>2 h</td>
+                <td>20.5 h</td>
+                <td>转正杯子、双臂交接、竖直放到碟子上，三步全部完成</td>
+              </tr>
+              <tr>
+                <td><strong>Fold-Clothes</strong></td>
+                <td>360 demos / 3.0 h</td>
+                <td>2 h</td>
+                <td>21 h</td>
+                <td>T 恤连续三折，每一步都干净完成</td>
+              </tr>
+              <tr>
+                <td><strong>Bag-Grocery</strong></td>
+                <td>300 demos / 2.5 h</td>
+                <td>2 h</td>
+                <td>7 h</td>
+                <td>打开袋子并按从左到右顺序放入三件物品</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>每个方法都做 20 次 ID rollout 和 20 次 OOD rollout。OOD 又分成两半：10 次使用训练场景里的新物体，10 次使用新背景、不同桌高等新场景。除了二值成功率，论文还按完成的子任务数量计算 normalized score，避免长任务在最后一步失败时丢掉全部信息。</p>
+
+        <figure class="figure">
+          <img src="egowam_assets/ood_objects.png" alt="三个真实机器人任务的训练物体与 OOD 物体" loading="lazy" />
+          <figcaption>论文 Figure 13。杯碟、购物袋与衣服任务中的 ID/OOD 对象。场景 OOD 还包括背景和桌面高度变化，折衣任务对此尤其敏感。</figcaption>
+        </figure>
+
+        <div class="metric-strip">
+          <div class="metric"><b>1800</b><span>真实机器人 rollout 总数</span></div>
+          <div class="metric"><b>20 + 20</b><span>每个设置的 ID / OOD 次数</span></div>
+          <div class="metric"><b>≈10:1</b><span>EgoVerse 与机器人数据总量比</span></div>
+          <div class="metric"><b>3 tasks</b><span>刚体、可变形、长程顺序操作</span></div>
+        </div>
+      </section>
+
+      <section id="results">
+        <h2>08 · 主结果：DINO 赢泛化，3D Flow 赢空间精度</h2>
+        <p>Figure 3 把每个方法的 Robot Only、加入同域人类数据、加入 EgoVerse 三组结果放在一起。柱顶数字是相对 Robot Only 的绝对百分点变化，不是相对百分比。最稳定的模式有三条：</p>
+        <ul class="plain-list">
+          <li>BC 在杯碟和折衣上会被自然人类数据拖累；购物装袋因为人和机器人的 pick-and-place 方式更接近，BC 才获得小幅收益。</li>
+          <li>DINO 在陌生物体与陌生场景上最强，尤其折衣 OOD 成功率从 15% 提升到 85%，增加 70 个百分点。</li>
+          <li>3D Flow 在杯碟的 ID 空间精度上最强，EgoVerse 后成功率达到 90%；在购物装袋 OOD 上达到 55%，也高于 DINO 的 50%。</li>
+        </ul>
+
+        <figure class="figure wide-figure">
+          <img src="egowam_assets/results_all.png" alt="EgoWAM 三项真实机器人任务的完整量化结果" loading="lazy" />
+          <figcaption>论文 Figure 3。灰、浅黄、深黄依次代表 Robot Only、加入同域人类、加入 EgoVerse。误差条为有限样本下控制误覆盖的一类错误置信区间。</figcaption>
+        </figure>
+
+        <div class="result-tool" id="result-tool">
+          <div class="tool-head">
+            <h3>真实机器人成功率</h3>
+            <div class="segmented" aria-label="任务">
+              <button type="button" data-task="cup" class="active">Cup</button>
+              <button type="button" data-task="bag">Bag</button>
+              <button type="button" data-task="fold">Fold</button>
+            </div>
+            <div class="segmented" aria-label="数据划分">
+              <button type="button" data-split="id" class="active">In-Domain</button>
+              <button type="button" data-split="ood">OOD</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th>方法</th>
+                  <th>Robot Only</th>
+                  <th>+ EgoVerse</th>
+                  <th>变化</th>
+                  <th>最终成功率</th>
+                </tr>
+              </thead>
+              <tbody id="result-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <figure class="figure wide-figure">
+          <img src="egowam_assets/rollout_cases.png" alt="EgoWAM 真实机器人定性案例对比" loading="lazy" />
+          <figcaption>论文 Figure 5。上：3D Flow 完成精确杯子运输，BC 出现人类式动作，Pixel 在运输阶段失败。中：购物袋 OOD 物体下，BC 无法抓取，Pixel 在空中执行幻觉抓握。下：更低桌面的新场景中，DINO 完成三折，BC 和 Pixel 分别受高度与几何判断影响。</figcaption>
+        </figure>
+
+        <div class="callout">
+          <h4>两种抽象不是谁完全取代谁</h4>
+          <p>DINO 的语义先验适合认出“这是没见过的杯子或衣服”；3D Flow 的几何先验适合判断“它向哪里移动、是否到达正确位置”。论文结果更像一张能力分工图，而不是单一赢家榜单。</p>
+        </div>
+      </section>
+
+      <section id="ablations">
+        <h2>09 · 消融与因果证据：收益究竟来自哪条监督</h2>
+
+        <h3>9.1 表征空间：WAM 让人和机器人按任务关系靠近</h3>
+        <figure class="figure">
+          <img src="egowam_assets/umap.png" alt="BC 与 WAM 共享 trunk 表征的 UMAP 对比" loading="lazy" />
+          <figcaption>论文 Figure 4。BC 的 robot、同域人类与 EgoVerse 特征形成分离簇；3D-Flow WAM 下三类数据明显混合。UMAP 只能提供表征相关性的可视化证据，但它与负迁移和 OOD 结果方向一致。</figcaption>
+        </figure>
+
+        <h3>9.2 世界预测误差：3D Flow 从人类数据中得到最多</h3>
+        <figure class="figure">
+          <img src="egowam_assets/world_prediction.png" alt="DINO 与 3D Flow 的世界预测定性和定量比较" loading="lazy" />
+          <figcaption>论文 Figure 7。加入人类数据后，VAE 像素 MSE 改善 0.7%，RAE 改善 3.6%，3D Flow MSE 改善 44.8%。三类 MSE 的量纲不同，不能横向比较绝对数值；有意义的是各自从 Robot Only 到 Co-train 的变化。</figcaption>
+        </figure>
+
+        <h3>9.3 故意错位的人类动作：BC 跌破 robot-only，3D Flow 基本不动</h3>
+        <p>在 Bag-Grocery 上，作者专门收集一组人类以机器人平行夹爪无法复现的方式抓取物体。自然同域数据下，BC 成功率 45%，3D Flow 为 80%；换成故意错位数据后，BC 降至 20%，低于 40% 的 robot-only 基线，而 3D Flow 仅从 80% 降到 75%。</p>
+
+        <figure class="figure">
+          <img src="egowam_assets/unaligned_ablation.png" alt="故意错位人类数据对 BC 和 3D Flow 的影响" loading="lazy" />
+          <figcaption>论文 Figure 8。动作头直接承受不可执行轨迹，因此 BC 发生明显负迁移；世界运动监督仍然能利用物体被拿起和放下的后果。</figcaption>
+        </figure>
+
+        <h3>9.4 反过来手工对齐：Pixel 与 DINO 追回收益，3D Flow 保持 85%</h3>
+        <p>在 Cup-on-Saucer 上让人刻意模仿机器人的相机高度、静态视角和抓握策略后，BC 从 15% 升到 35%，Pixel 从 35% 升到 65%，DINO 从 50% 升到 70%。3D Flow 在自然与对齐两种数据下都保持 85%。这组实验把 D3 的作用单独暴露出来：对 Pixel 和 DINO，减少头动等于在采集端替它们做了一部分稳定化；3D Flow 已在表示层完成这件事。</p>
+
+        <figure class="figure">
+          <img src="egowam_assets/aligned_ablation.png" alt="机器人对齐人类示范对四种方法成功率的影响" loading="lazy" />
+          <figcaption>论文 Figure 9。BC robot-only 为 25%。对齐采集使 BC、Pixel、DINO 全部上升，3D Flow 则在两种条件下都保持 85%。</figcaption>
+        </figure>
+
+        <h3>9.5 只给动作、只给 3D Flow、两者都给</h3>
+        <p>作者进一步在 Cup-on-Saucer 上关闭人类 batch 的部分监督。只给 3D Flow 已经在 ID、OOD Object、OOD Scene 三个划分上全面超过只给动作；两种信号同时使用又显著超过 3D Flow-only。OOD Scene 的成功率依次是 0%、10%、30%，说明世界监督是跨场景迁移的主通道，但动作标签仍能提示哪些运动与任务意图相关。</p>
+
+        <figure class="figure">
+          <img src="egowam_assets/human_modality_ablation.png" alt="人类数据动作监督、3D Flow 监督及联合监督的消融" loading="lazy" />
+          <figcaption>论文 Figure 11。Action + 3D Flow 在三种划分都最强。对应的世界预测损失也略有下降：Human 0.23→0.22，Robot 0.20→0.19，支持动作上下文有助于筛选任务相关运动。</figcaption>
+        </figure>
+      </section>
+
+      <section id="simulation">
+        <h2>10 · 一个预训练陷阱，以及 RoboTwin 跨机器人复验</h2>
+
+        <h3>10.1 Pixel-PT 为什么会“看得更清楚，却做得更差”</h3>
+        <p>Bag-Grocery 的第一步是打开袋子。Robot-only Pixel-PT 借用了大规模自然视频先验，而自然图片里的购物袋通常已经敞开。模型于是生成一个清晰但错误的未来：袋子在夹爪真正拉开之前就已经打开。动作策略据此跳过开袋阶段，直接进入放物体步骤。</p>
+
+        <figure class="figure wide-figure">
+          <img src="egowam_assets/pixelpt_failure.png" alt="Pixel-PT 在购物袋任务上幻觉袋子提前打开的六步预测" loading="lazy" />
+          <figcaption>论文 Figure 12。Pixel 从头训练的结果较模糊，却忠实保留“袋子仍闭合”；Robot-only Pixel-PT 在最后一帧幻觉袋子已打开；加入 EgoVerse 后，Pixel-PT 同时保留清晰度和正确状态演化。</figcaption>
+        </figure>
+
+        <p>这个案例把“生成质量”和“控制价值”区分得很清楚。视频先验会补全最常见的视觉结果，却未必尊重当前状态和动作因果。人类任务数据的价值之一，是把这种无条件常识重新约束到具体操作序列上。</p>
+
+        <h3>10.2 RoboTwin：把人机差异换成四种机器人之间的差异</h3>
+        <p>补充实验以 Aloha-AgileX 为主具身，并加入 ARX-X5、Franka、UR5 联合训练。不同机械臂关节数不同，但都转换到相机坐标下的双臂 14D 末端动作。每个任务使用 100 个相同 held-out seed，比较单具身训练 <code>s</code> 与四机器人联合训练 <code>c</code>。</p>
+
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>任务</th>
+                <th>ACT-EE</th>
+                <th>DP-EE</th>
+                <th>BC s / c</th>
+                <th>Pixel s / c</th>
+                <th>DINO s / c</th>
+                <th>3D Flow s / c</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>pick-diverse-bottles</td>
+                <td>2%</td>
+                <td>5%</td>
+                <td>2 / 6</td>
+                <td>7 / 11</td>
+                <td>4 / <strong>28</strong></td>
+                <td>0 / 16</td>
+              </tr>
+              <tr>
+                <td>stack-bowls-three</td>
+                <td>0%</td>
+                <td>0%</td>
+                <td>0 / 0</td>
+                <td>0 / 0</td>
+                <td>0 / 8</td>
+                <td>0 / <strong>16</strong></td>
+              </tr>
+              <tr>
+                <td>hanging-mug</td>
+                <td>0%</td>
+                <td>0%</td>
+                <td>0 / 0</td>
+                <td>0 / 1</td>
+                <td>0 / 0</td>
+                <td>0 / 0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>前两项再次出现同一规律：跨具身训练优于单具身，DINO 和 3D Flow 对外观变化更稳。但绝对成功率也暴露了边界：hanging-mug 需要毫米级穿孔，几乎所有方法为零。外观抽象和几何表征能帮助泛化，却不会自动提供精密控制。</p>
+      </section>
+
+      <section id="critique">
+        <h2>11 · 客观评价：论文解决了什么，还没有解决什么</h2>
+
+        <div class="critique-grid">
+          <div class="critique-column">
+            <h3>最强的地方</h3>
+            <ul>
+              <li><strong>问题拆得干净。</strong>固定 trunk、动作头和数据混合，只替换世界目标，使“世界表征”第一次成为人机 WAM 联合训练中的显式实验轴。</li>
+              <li><strong>负迁移被正反两组干预验证。</strong>故意错位让 BC 崩溃，手工对齐又让 BC、Pixel、DINO 恢复；3D Flow 在两端都稳定，证据比单纯报最终分数更有解释力。</li>
+              <li><strong>训练与部署边界清楚。</strong>世界头只负责塑造表征，不增加测试时成本，避免把更慢的规划式方法与快速 BC 混在一起比较。</li>
+              <li><strong>定性失败与指标对应。</strong>空中抓握、低桌面失败、袋子提前打开等案例都能回到对应表征的归纳偏置，而不是只展示成功视频。</li>
+            </ul>
+          </div>
+          <div class="critique-column caution">
+            <h3>需要保留的疑问</h3>
+            <ul>
+              <li><strong>并非只改变“表示”。</strong>三种目标对应的 head 容量差异很大；3D Flow 预测完整 100 步轨迹，而 Pixel/DINO 主要预测终点未来帧。监督密度和架构也在变化。</li>
+              <li><strong>λ=1 不等于梯度公平。</strong>不同目标的维度、噪声尺度和损失幅值不同，相同 loss weight 未必给 trunk 相同强度的梯度。</li>
+              <li><strong>每个结果单元样本仍小。</strong>20 次 ID、20 次 OOD 让成功率以 5 个百分点跳动。总计 1800 次很可观，但单设置的精细差异仍需谨慎。</li>
+              <li><strong>仍是单任务策略。</strong>每个任务单独训练，且增益主要是上下文泛化；论文明确承认尚不能从人类视频获得新的动作原语。</li>
+              <li><strong>3D Flow 依赖强前处理。</strong>Track4World、Aria VIO、位移阈值和首尾帧过滤共同提供干净目标，迁移到缺少相机位姿的普通网络视频并不直接。</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>我认为最值得继续做的五个方向</h3>
+        <ol class="plain-list">
+          <li><strong>DINO + 3D Flow 混合目标：</strong>语义负责“是什么”，几何负责“怎么动”，可尝试分层 token、联合解码或按任务动态加权，而不是二选一。</li>
+          <li><strong>真正 action-conditioned 的 world model：</strong>让未来预测显式接收候选动作，比较训练期辅助监督与测试期短视规划能否互补。</li>
+          <li><strong>多任务与规模曲线：</strong>把三个任务放进同一策略，系统改变人类数据量、场景多样性与 batch 配比，验证 human-data scaling 是否持续。</li>
+          <li><strong>面向精密控制的目标：</strong>增加接触状态、末端到目标的相对位姿、局部高分辨率几何，解决 hanging-mug 一类毫米级操作。</li>
+          <li><strong>更弱传感器假设：</strong>研究不依赖 Aria VIO 的自监督相机稳定、置信度加权 3D tracking，以及在普通第一视角互联网视频上的鲁棒目标生成。</li>
+        </ol>
+
+        <div class="ending">
+          <h2>最后把整篇论文压成一句话</h2>
+          <p>EgoWAM 证明，人类视频对机器人最有价值的部分，不一定是可以直接模仿的动作，而是跨身体、跨视角仍然成立的世界变化。</p>
+          <p>动作标签回答“这个身体怎样执行”；世界表征回答“无论谁执行，环境发生了什么”。</p>
+        </div>
+
+        <div class="footer-note">
+          图表版权归 EgoWAM 原作者；本文解读版权归 Xinkai Wang（王薪恺）所有。论文作者：Baoyu Li、Xinchen Yin、Mengying Lin、Yixin Zhang、Danfei Xu，Georgia Institute of Technology。
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button type="button" aria-label="关闭图片预览">×</button>
+    <img src="" alt="" />
+  </div>
+
+  <script>
+    (function () {
+      var progress = document.getElementById("reading-progress");
+      function updateProgress() {
+        var total = document.documentElement.scrollHeight - window.innerHeight;
+        var ratio = total > 0 ? window.scrollY / total : 0;
+        progress.style.width = Math.max(0, Math.min(100, ratio * 100)) + "%";
+      }
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      updateProgress();
+
+      var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+      var sections = links.map(function (link) {
+        return document.querySelector(link.getAttribute("href"));
+      }).filter(Boolean);
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (link) {
+            link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+          });
+        });
+      }, { rootMargin: "-18% 0px -70% 0px", threshold: 0 });
+      sections.forEach(function (section) { observer.observe(section); });
+
+      var lightbox = document.getElementById("lightbox");
+      var preview = lightbox.querySelector("img");
+      var close = lightbox.querySelector("button");
+      document.querySelectorAll(".figure img").forEach(function (image) {
+        image.addEventListener("click", function () {
+          preview.src = image.src;
+          preview.alt = image.alt || "";
+          lightbox.classList.add("open");
+          lightbox.setAttribute("aria-hidden", "false");
+        });
+      });
+      function closeLightbox() {
+        lightbox.classList.remove("open");
+        lightbox.setAttribute("aria-hidden", "true");
+        preview.src = "";
+      }
+      close.addEventListener("click", closeLightbox);
+      lightbox.addEventListener("click", function (event) {
+        if (event.target === lightbox) closeLightbox();
+      });
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") closeLightbox();
+      });
+
+      var resultData = {
+        cup: {
+          id: {
+            BC: [25, 15], Pixel: [25, 50], "Pixel-PT": [40, 50], DINO: [25, 70], "3D Flow": [70, 90]
+          },
+          ood: {
+            BC: [5.56, 5.56], Pixel: [11.11, 5.56], "Pixel-PT": [11.11, 11.11], DINO: [11.11, 53.89], "3D Flow": [22.22, 53.89]
+          }
+        },
+        bag: {
+          id: {
+            BC: [40, 50], Pixel: [45, 65], "Pixel-PT": [30, 35], DINO: [40, 85], "3D Flow": [60, 90]
+          },
+          ood: {
+            BC: [5, 10], Pixel: [10, 15], "Pixel-PT": [5, 35], DINO: [10, 50], "3D Flow": [10, 55]
+          }
+        },
+        fold: {
+          id: {
+            BC: [100, 85], Pixel: [100, 100], "Pixel-PT": [100, 100], DINO: [100, 100], "3D Flow": [100, 100]
+          },
+          ood: {
+            BC: [5, 0], Pixel: [20, 10], "Pixel-PT": [25, 25], DINO: [15, 85], "3D Flow": [25, 40]
+          }
+        }
+      };
+
+      var currentTask = "cup";
+      var currentSplit = "id";
+      var resultBody = document.getElementById("result-body");
+
+      function formatValue(value) {
+        return Number.isInteger(value) ? value + "%" : value.toFixed(1) + "%";
+      }
+
+      function renderResults() {
+        resultBody.innerHTML = "";
+        var rows = resultData[currentTask][currentSplit];
+        Object.keys(rows).forEach(function (method) {
+          var values = rows[method];
+          var base = values[0];
+          var finalValue = values[1];
+          var gain = finalValue - base;
+          var tr = document.createElement("tr");
+
+          var methodCell = document.createElement("td");
+          methodCell.textContent = method;
+          tr.appendChild(methodCell);
+
+          var baseCell = document.createElement("td");
+          baseCell.textContent = formatValue(base);
+          tr.appendChild(baseCell);
+
+          var finalCell = document.createElement("td");
+          finalCell.textContent = formatValue(finalValue);
+          tr.appendChild(finalCell);
+
+          var gainCell = document.createElement("td");
+          gainCell.textContent = (gain > 0 ? "+" : "") + gain.toFixed(gain % 1 === 0 ? 0 : 1) + " pp";
+          gainCell.className = gain >= 0 ? "gain-positive" : "gain-negative";
+          tr.appendChild(gainCell);
+
+          var barCell = document.createElement("td");
+          var valueText = document.createElement("span");
+          valueText.textContent = formatValue(finalValue);
+          var track = document.createElement("div");
+          track.className = "bar-track";
+          var fill = document.createElement("div");
+          fill.className = "bar-fill";
+          fill.style.width = Math.max(0, Math.min(100, finalValue)) + "%";
+          track.appendChild(fill);
+          barCell.appendChild(valueText);
+          barCell.appendChild(track);
+          tr.appendChild(barCell);
+
+          resultBody.appendChild(tr);
+        });
+      }
+
+      document.querySelectorAll("[data-task]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          currentTask = button.getAttribute("data-task");
+          document.querySelectorAll("[data-task]").forEach(function (item) {
+            item.classList.toggle("active", item === button);
+          });
+          renderResults();
+        });
+      });
+
+      document.querySelectorAll("[data-split]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          currentSplit = button.getAttribute("data-split");
+          document.querySelectorAll("[data-split]").forEach(function (item) {
+            item.classList.toggle("active", item === button);
+          });
+          renderResults();
+        });
+      });
+
+      renderResults();
+    })();
+  </script>
+</body>
+</html>
