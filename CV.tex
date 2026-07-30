@@ -1,0 +1,180 @@
+\documentclass{article}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{hyperref}
+
+\begin{document}
+
+\footnotesize
+% \title{Curriculum Vitae}
+% \author{Bokai Lin}
+% \date{}
+% \maketitle
+
+% \section*{Contact Information}
+% \begin{itemize}
+%     \item \textbf{Location:} Shanghai, China
+%     \item \textbf{Email:} \href{mailto:unik0325@gmail.com}{unik0325@gmail.com}
+%     \item \textbf{Phone:} +86 151-1337-8728
+% \end{itemize}
+
+\title{\textbf{Xinkai Wang}}
+\author{Shanghai, China \quad \href{xinkaiwang@sii.edu.cn}{xinkaiwang@sii.edu.cn} \quad +86 155 2321 3758 \\ No. 3, Lane 699, Huafa Road, Xuhui District, Shanghai}
+\date{}
+\maketitle
+
+\section*{Education}
+\hrule
+\vspace{0.5em}
+\textbf{Shanghai Innovation Institute / Southeast University} \hfill Sep. 2025 - Now \\
+Ph.D candidate in Instrument Science and Technology, School of Instrument Science and Engineering
+\begin{itemize}
+    \item \textbf{GPA}: \textemdash{}/4.0
+    \item \textbf{Research Interest}: Vision-Language-Action Model, Video World Model, Unified Multimodal Understanding and Generation Model
+Generation Model
+\end{itemize}
+
+\vspace{0.5em}
+
+\noindent\textbf{Southeast University}  \hfill Sep. 2023 - Jun. 2025\\
+MSc in School of Instrument Science and Engineering
+\begin{itemize}
+    \item \textbf{GPA}: 85.19/100.0
+    \item \textbf{Research Interest}: Medical Robot, Image Registration, Unified Multimodal Understanding and Generation Model
+\end{itemize}
+
+\vspace{0.5em}
+
+\noindent\textbf{Southeast University}  \hfill Sep. 2019 - Jun. 2023\\
+BEng in School of Instrument Science and Engineering
+\begin{itemize}
+    \item \textbf{GPA}: 3.8/4.0
+    \item \textbf{Coursework}: Computer Organization and Architecture, Linear Algebra, Sensing Technology, Modern Control Engineering
+\end{itemize}
+\section*{Publications}
+\hrule
+\vspace{0.5em}
+\textbf{Cross-Domain Interest Representation Learning for Scenario- and
+Task-Aware Recommendation} \hfill Nov 2025\\ SIGIR 2026 \\
+\underline{Bokai Lin}, Naijun Gao, Yucen Gao, Cheng Hu, Zhinan Zhang, Xiaofeng Gao, Guihai Chen \\
+\begin{itemize}
+    \item \textbf{Background:} Existing industrial recommendation systems insufficiently model transferable user interests across domains, scenarios, and tasks, and often fail to effectively align multimodal and ID-based features.
+    \item \textbf{Methods:} We propose STAR-CDR, which introduces a CDI Extractor, CDI Injector, and CDI Multimodal Adapter to improve cross-domain sequential modeling, adaptive expert routing, and multimodal alignment.
+    \item \textbf{Empirical Results:} STAR-CDR achieves +0.35 average AUC improvement over the strongest baseline offline, and yields consistent online KPI gains of +3.17\% to +9.24\% in production A/B testing.
+\end{itemize}
+
+\noindent \textbf{ChronoFlow-Policy: Unifying Past-Current-Future Interaction Flow in Visuomotor Policy Learning} \hfill Mar 2026\\ Under Review in ECCV 2026 \\
+\underline{Bokai Lin*}, Yifu Xu*, Xinyu Zhan, Hongjie Fang, JIALIN TIAN, Fu-Cheng Zhang, Yong-Lu Li, Cewu Lu, Lixin Yang \\
+\begin{itemize}
+    \item \textbf{Background:} Effective visuomotor policy learning requires understanding not only the current interaction state, but also how objects and manipulators have evolved from the past and may change in the future. Existing methods typically model historical context or future dynamics in isolation, lacking a unified temporal representation of interaction dynamics.
+    \item \textbf{Methods:} We propose ChronoFlow, a temporally unified representation that captures past, current, and future interaction dynamics through sparse 3D keypoints of both objects and the gripper. Based on this representation, we introduce ChronoFlow-Policy, a diffusion-based visuomotor policy that jointly learns ChronoFlow and action sequences through a co-training objective, enabling temporally coherent reasoning over object motion and gripper interaction.
+    \item \textbf{Empirical Results:} Experiments on 14 simulated tasks and 5 real-world manipulation tasks show that ChronoFlow-Policy consistently outperforms strong diffusion-policy baselines, with improved robustness in long-horizon and non-Markovian manipulation scenarios.
+\end{itemize}
+
+\vspace{0.5em}
+
+\noindent\textbf{LIDEA: Human-to-Robot Imitation Learning via Implicit Feature Distillation and Explicit Geometry Alignment} \hfill Mar 2026\\ Under Review in IROS 2026 \\
+Yifu Xu*, \underline{Bokai Lin*}, Xinyu Zhan, Hongjie Fang, Yong-Lu Li, Cewu Lu, Lixin Yang \\
+\begin{itemize}
+    \item \textbf{Background:} Robot learning is limited by the scarcity and cost of robotic demonstrations, while human videos provide abundant interaction data. However, transferring policies from human hands to robot grippers is challenging due to discrepancies in appearance, geometry, and action semantics.
+    \item \textbf{Methods:} We propose LIDEA, a human2robot imitation learning framework that combines implicit 2D feature distillation with explicit 3D geometry alignment to bridge embodiment gap between human hands and robot grippers.
+    \item \textbf{Empirical Results:} LIDEA enables robust cross-embodiment transfer from human videos to robot policies, replacing up to 80\% of robot demonstrations and improving out-of-distribution generalization.
+\end{itemize}
+
+\noindent\textbf{MatryoshkaKV: Adaptive KV Compression via Trainable Orthogonal Projection} \hfill Oct 2024\\
+ICLR 2025 \\
+\underline{Bokai Lin}, Zihao Zeng, Zipeng Xiao, Siqi Kou, TianQi Hou, Xiaofeng Gao, Hao Zhang, Zhijie Deng \\
+\url{https://arxiv.org/abs/2410.14731}
+\begin{itemize}
+    \item \textbf{Background:} As the size of the LLM grows, the KV cache becomes a bottleneck within the system in both storage and memory transfer. Previous studies on KV cache compression mainly focus on token merging and eviction, leaving compression on the feature dimension axis less explored.
+    \item \textbf{Methods:} We focus on the feature dimension axis, by utilizing low-rank projection matrices to transform the cache features into spaces with reduced dimensions. We propose to tune the orthogonal projection matrix on the continual pre-training or supervised fine-tuning datasets with an elaborate Matryoshka learning strategy.
+    \item \textbf{Empirical Results:} Our MatryoshkaKV achieves a 60\% KV cache compression rate while maintaining 90\% performance. By combining token merging and eviction methods, we observed an increase in the perplexity of only about 1 on texts longer than 2k tokens, using just 10\% of the KV cache.
+\end{itemize}
+
+\vspace{0.5em}
+
+\noindent\textbf{In-context KV-Cache Eviction for LLMs via Attention-Gate}  \hfill Oct 2024 \\
+arXiv preprint arXiv:2410.12876 \\
+Zihao Zeng, \underline{Bokai Lin}, TianQi Hou, Hao Zhang, Zhijie Deng \\
+\url{https://arxiv.org/abs/2410.12876}
+\begin{itemize}
+    \item \textbf{Background:} KV-Cache is essential for LLM inference but can bottleneck with large models and long contexts. Static eviction lacks flexibility, while dynamic methods like H2O face attention bias.
+    \item \textbf{Methods:} We propose Attention-Gate, a parameterized eviction mechanism that uses context to generate token eviction flags. Easily integrated into LLMs, it’s tuned via continual pre-training or fine-tuning with minimal overhead.
+    \item \textbf{Empirical Results:} Our approach increases accuracy and evicts more tokens efficiently. In supervised fine-tuning, it outperforms LoRA-finetuned LLMs, enhancing accuracy by 13.9\% on datasets like RTE while evicting 62.8\% of tokens.
+\end{itemize}
+
+\vspace{0.5em}
+
+\noindent\textbf{Improved Operator Learning by Orthogonal Attention} \hfill July 2024\\
+ICML 2024 Spotlight \\
+Zipeng Xiao, Zhongkai Hao, \underline{Bokai Lin}, Zhijie Deng, Hang Su \\
+\url{https://arxiv.org/pdf/2310.12487}
+\begin{itemize}
+    \item \textbf{Background:} Neural operators typically depend on computationally intensive PDE solvers for training data and often suffer from performance issues with limited data.
+    \item \textbf{Methods:} We found that the kernel integral operator in PDE solvers can be reformulated using orthonormal eigenfunctions, similar to attention mechanisms but without softmax. Using this insight, we developed an orthogonal attention module to create the Orthogonal Neural Operator (ONO).
+    \item \textbf{Empirical Results:} Through extensive testing on six challenging operator learning benchmarks, ONO demonstrated impressive performance: reducing prediction errors by up to 30\% compared to other methods and achieving an 80\% decrease in test error for zero-shot super-resolution.
+\end{itemize}
+
+\vspace{0.5em}
+
+% \noindent\textbf{Amortized Fourier Neural Operators} \hfill Sept 2024 \\
+% NeurIPS 2024 \\
+% Zipeng Xiao, Siqi Kou, Zhongkai Hao, \underline{Bokai Lin}, Zhijie Deng
+% \begin{itemize}
+%     \item \textbf{Background:} Fourier Neural Operators (FNOs) are effective for solving PDEs but become inefficient in high-dimensional cases due to the need for numerous parameters across different frequency modes.
+%     \item \textbf{Methods:} We introduce the AMortized Fourier Neural Operator (AM-FNO), which maintains a fixed number of parameters regardless of frequency modes. This is implemented using Kolmogorov–Arnold Networks (KAN) and MLPs with orthogonal embeddings.
+%     \item \textbf{Empirical Results:} Our approach reduces relative error by 25\% to 35\% across six standard PDE benchmarks. AM-FNO also excels in zero-shot super-resolution tasks, achieving lower errors than FNO at test resolutions, highlighting its potential to cut data collection and training costs for high-resolution PDE problems.
+% \end{itemize}
+
+
+\section*{Experience}
+\hrule
+\vspace{0.5em}
+
+\textbf{Shanghai Innovation Institute} \hfill Mar. 2025 -- Now 
+\begin{itemize}
+    \item \textbf{Supervisors:} \href{https://lixiny.github.io/}{Lixin Yang}, \href{https://www.mvig.org/}{Cewu Lu}
+    \item \textbf{Embodied AI}: Research on integrating 3D motion prior into Visuomotor Policies and World Action Models, as well as Ego-centric data and UMI data utilization.
+\end{itemize}
+
+\vspace{0.5em}
+
+\noindent\textbf{Jiangsu Key Laboratory of Robot Perception and Control Technology} \hfill Jun. 2023 -- Feb. 2025 
+\begin{itemize}
+    \item \textbf{Supervisors:} Lifeng Zhu, Aiguo Song
+    \item \textbf{Medical Robot}: Distill LLM-related knowledge into the embedding layer of ID-based recommender systems to effectively address the cold-start problem for items with limited user interactions.
+    \item \textbf{Computer Human Interaction}: Search for the midpoint of the optimal route and simultaneously use parallel decoding to improve route generation efficiency.
+\end{itemize}
+
+% \vspace{0.5em}
+
+% \noindent\textbf{Interactive Media Business Unit, Huawei Consumer Cloud Service} \hfill Sept 2024 -- Now 
+% \begin{itemize}
+%     \item \textbf{Multi-Domain Recommendation}: Utilize user information from different apps to enrich user representations.
+%     \item \textbf{Multi-Modal Recommendation}: Align the user-item embedding of ID-based recommender systems with that of Multi-Modal recommender systems.
+% \end{itemize}
+
+% \vspace{0.5em}
+
+% \noindent\textbf{Qingyuan Research Institute} \hfill June 2023 -- Sept 2024
+% \begin{itemize}
+%     \item \textbf{Supervisor:} Zhijie Deng
+%     \item \textbf{Efficient AIGC}: Optimize AIGC inference by innovating KV cache compression techniques and unifying LLMs/VLMs, focusing on reducing memory footprint and accelerating inference speed.
+%     \item \textbf{Neural Operator:} Advance NO technology to improve accuracy and efficiency in solving PDE problems.
+% \end{itemize}
+
+% \section*{Technical Skills}
+% \hrule
+% \vspace{0.5em}
+% \begin{itemize}
+%     \item \textbf{Languages:} C++, C, Python, \LaTeX
+%     \item \textbf{Framework:} Pytorch, TensorFlow
+% \end{itemize}
+
+\section*{Academic Service}
+\hrule
+\vspace{0.5em}
+\begin{itemize}
+    \item \textbf{External Reviewer:} ECCV, ICRA, IROS, IEEE VR, CHI
+\end{itemize}
+\normalsize
+\end{document}
