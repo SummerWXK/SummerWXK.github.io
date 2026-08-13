@@ -1,180 +1,394 @@
-\documentclass{article}
-\usepackage[a4paper, margin=1in]{geometry}
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[
+  top=0.62in,
+  bottom=0.68in,
+  left=0.70in,
+  right=0.70in
+]{geometry}
+\usepackage{tgpagella}
+\usepackage[scaled=0.92]{helvet}
+\usepackage{etoolbox}
+\usepackage{microtype}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
 \usepackage{hyperref}
+
+\input{glyphtounicode}
+\pdfgentounicode=1
+
+% Blue palette sampled from Shanghai Innovation Institute's public website
+% assets. The seal is used once as a restrained affiliation marker.
+\definecolor{SIIPrimary}{HTML}{113E98}
+\definecolor{SIILink}{HTML}{004BB9}
+\definecolor{SIIAccent}{HTML}{1267E3}
+\definecolor{SIIPale}{HTML}{F4F8FF}
+\definecolor{SIIInk}{HTML}{1F2937}
+\definecolor{SIIMuted}{HTML}{7A8BA2}
+\definecolor{SIIRule}{HTML}{D5DDE8}
+
+\hypersetup{
+  colorlinks=true,
+  urlcolor=SIILink,
+  linkcolor=SIIPrimary,
+  pdfauthor={Xinkai Wang},
+  pdftitle={Curriculum Vitae - Xinkai Wang},
+  pdfsubject={Academic Curriculum Vitae},
+  pdfkeywords={Xinkai Wang, Vision-Language-Action, Video World Models, Multimodal Learning}
+}
+\urlstyle{same}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\emergencystretch}{2em}
+\setlength{\footskip}{18pt}
+\raggedbottom
+\frenchspacing
+\color{SIIInk}
+
+\setlist[itemize]{
+  leftmargin=1.20em,
+  itemsep=0.08em,
+  topsep=0.16em,
+  parsep=0pt,
+  partopsep=0pt
+}
+\renewcommand{\labelitemi}{\textcolor{SIIAccent}{\small\textbullet}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[L]{\sffamily\footnotesize\color{SIIMuted} Xinkai Wang \textbar\ Curriculum Vitae}
+\fancyfoot[R]{\sffamily\footnotesize\bfseries\color{SIIPrimary} \thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\newcommand{\cvlink}[2]{%
+  \href{#1}{\sffamily\footnotesize\bfseries\color{SIILink} #2}%
+}
+
+\newcommand{\cvheader}{%
+  \begingroup
+  \setlength{\fboxsep}{6pt}%
+  \noindent\colorbox{SIIPale}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep\relax}{%
+      \begin{tabularx}{\linewidth}{@{}p{18.5mm}@{\hspace{2.5mm}}Y>{\raggedleft\arraybackslash}p{0.41\linewidth}@{}}
+        \raisebox{-0.50\height}{%
+          \includegraphics[width=17mm]{images/院徽圆.png}%
+        }
+        &
+        \begin{minipage}[c]{\linewidth}
+          {\fontsize{24}{26}\selectfont\sffamily\bfseries\color{SIIPrimary}
+           Xinkai Wang}\par
+          \vspace{1.5pt}
+          {\sffamily\small\bfseries Ph.D. Candidate}\par
+          {\sffamily\footnotesize\color{SIIMuted}
+           Shanghai Innovation Institute \textbullet\ Southeast University}
+        \end{minipage}
+        &
+        \begin{minipage}[c]{\linewidth}
+          \raggedleft\sffamily\footnotesize
+          \href{mailto:xinkaiwang@sii.edu.cn}{xinkaiwang@sii.edu.cn}
+          \enspace\textcolor{SIIRule}{\textbar}\enspace
+          +86 155 2321 3758\par
+          \vspace{1.5pt}
+          \cvlink{https://summerwxk.github.io/}{Homepage}
+          \enspace\textcolor{SIIRule}{\textbar}\enspace
+          \cvlink{https://scholar.google.com/citations?user=SdTlC6QAAAAJ\&hl=en}{Scholar}
+          \enspace\textcolor{SIIRule}{\textbar}\enspace
+          \cvlink{https://github.com/SummerWXK}{GitHub}\par
+          \vspace{1.5pt}
+          {\scriptsize\color{SIIMuted}
+           No. 3, Lane 699, Huafa Road, Xuhui District, Shanghai, China}
+        \end{minipage}
+      \end{tabularx}%
+    }%
+  }\par
+  \endgroup
+  \vspace{0.34em}%
+}
+
+\newcommand{\cvsection}[1]{%
+  \par\vspace{0.64em}%
+  {\sffamily\large\bfseries\color{SIIPrimary} #1}\par\nobreak
+  \vspace{0.10em}%
+  \noindent{\color{SIIAccent}\rule{14mm}{1.05pt}}%
+  {\color{SIIRule}\rule{\dimexpr\linewidth-14mm\relax}{0.55pt}}\par\nobreak
+  \vspace{0.32em}%
+}
+
+\newcommand{\cventry}[4]{%
+  \begin{tabularx}{\linewidth}{@{}Y>{\raggedleft\arraybackslash}p{0.27\linewidth}@{}}
+    {\sffamily\bfseries #1} & {\sffamily\footnotesize\color{SIIMuted} #2} \\
+    {\small\itshape #3} & {\sffamily\footnotesize\bfseries\color{SIIAccent} #4}
+  \end{tabularx}\par
+  \vspace{0.08em}%
+}
+
+\newcommand{\cvorg}[2]{%
+  \begin{tabularx}{\linewidth}{@{}Y>{\raggedleft\arraybackslash}p{0.25\linewidth}@{}}
+    {\sffamily\bfseries #1} &
+    {\sffamily\footnotesize\color{SIIMuted} #2}
+  \end{tabularx}\par
+}
+
+\newcommand{\cvrole}[2]{%
+  \begin{tabularx}{\linewidth}{@{}Y>{\raggedleft\arraybackslash}p{0.27\linewidth}@{}}
+    {\small\itshape #1} &
+    {\sffamily\footnotesize\bfseries\color{SIIAccent} #2}
+  \end{tabularx}\par
+}
+
+\newcommand{\cvtworow}[2]{%
+  \noindent
+  \parbox[t]{0.18\linewidth}{\vspace{0pt}\raggedright #1}%
+  \hspace{0.8em}%
+  \parbox[t]{\dimexpr0.82\linewidth-0.8em\relax}{%
+    \vspace{0pt}\raggedright\hyphenpenalty=10000 #2%
+  }\par
+}
+
+\newcommand{\cvinterestrow}[2]{%
+  \noindent
+  \parbox[t]{0.12\linewidth}{%
+    \vspace{0pt}\raggedright\sffamily\small\bfseries\color{SIIPrimary} #1%
+  }%
+  \hspace{0.5em}%
+  \parbox[t]{\dimexpr0.88\linewidth-0.5em\relax}{%
+    \vspace{0pt}\raggedright\small #2%
+  }\par
+}
+
+\newcommand{\cvpublication}[5]{%
+  \noindent
+  \makebox[2.05em][l]{%
+    \sffamily\small\bfseries\color{SIIAccent}[#1]%
+  }%
+  \parbox[t]{\dimexpr\linewidth-2.05em\relax}{%
+    \raggedright
+    {\bfseries #2}\par
+    \vspace{0.05em}%
+    {\small #3}\par
+    \vspace{0.08em}%
+    {\sffamily\small\bfseries\color{SIIAccent} #4%
+     \ifstrempty{#5}{}{%
+       \enspace\textcolor{SIIRule}{\textbar}\enspace #5%
+     }}%
+  }\par
+  \vspace{0.36em}%
+}
+
+\newcommand{\cvaward}[3]{%
+  \cvtworow
+    {\sffamily\small\bfseries\color{SIIAccent} #1}
+    {{\small\bfseries #2}\par
+     \ifstrempty{#3}{}{%
+       \vspace{0.08em}{\small\color{SIIMuted} #3}\par
+     }}%
+  \vspace{0.16em}%
+}
 
 \begin{document}
 
-\footnotesize
-% \title{Curriculum Vitae}
-% \author{Bokai Lin}
-% \date{}
-% \maketitle
+\cvheader
 
-% \section*{Contact Information}
-% \begin{itemize}
-%     \item \textbf{Location:} Shanghai, China
-%     \item \textbf{Email:} \href{mailto:unik0325@gmail.com}{unik0325@gmail.com}
-%     \item \textbf{Phone:} +86 151-1337-8728
-% \end{itemize}
+\cvsection{Research Interests}
 
-\title{\textbf{Xinkai Wang}}
-\author{Shanghai, China \quad \href{xinkaiwang@sii.edu.cn}{xinkaiwang@sii.edu.cn} \quad +86 155 2321 3758 \\ No. 3, Lane 699, Huafa Road, Xuhui District, Shanghai}
-\date{}
-\maketitle
+\cvinterestrow
+  {Primary}
+  {Vision-Language-Action Models; Video World Models; Unified Multimodal
+   Understanding and Generation.}
+\vspace{0.10em}
+\cvinterestrow
+  {Additional}
+  {Human--AI Interaction and Haptics; Medical XR and Robot-Assisted
+   Intervention.}
 
-\section*{Education}
-\hrule
-\vspace{0.5em}
-\textbf{Shanghai Innovation Institute / Southeast University} \hfill Sep. 2025 - Now \\
-Ph.D candidate in Instrument Science and Technology, School of Instrument Science and Engineering
+\cvsection{Education}
+
+\cventry
+  {Shanghai Innovation Institute}
+  {Shanghai, China}
+  {Ph.D. Candidate in Instrument Science and Engineering}
+  {Mar. 2025--Present}
 \begin{itemize}
-    \item \textbf{GPA}: \textemdash{}/4.0
-    \item \textbf{Research Interest}: Vision-Language-Action Model, Video World Model, Unified Multimodal Understanding and Generation Model
-Generation Model
+  \item Joint Ph.D. training with Southeast University.
+  \item Primary advisors:
+    \href{https://lixiny.github.io/}{Prof. Lixin Yang} and
+    \href{https://www.mvig.org/}{Prof. Cewu Lu};
+    joint-training advisor:
+    \href{https://lfzhulf.github.io/}{Prof. Lifeng Zhu}.
 \end{itemize}
 
-\vspace{0.5em}
-
-\noindent\textbf{Southeast University}  \hfill Sep. 2023 - Jun. 2025\\
-MSc in School of Instrument Science and Engineering
+\cventry
+  {Southeast University}
+  {Nanjing, China}
+  {M.Sc. in Instrument Science and Engineering}
+  {Sep. 2023--Feb. 2025}
 \begin{itemize}
-    \item \textbf{GPA}: 85.19/100.0
-    \item \textbf{Research Interest}: Medical Robot, Image Registration, Unified Multimodal Understanding and Generation Model
+  \item GPA: 85.19/100.0. Advisor:
+    \href{https://lfzhulf.github.io/}{Prof. Lifeng Zhu}.
 \end{itemize}
 
-\vspace{0.5em}
-
-\noindent\textbf{Southeast University}  \hfill Sep. 2019 - Jun. 2023\\
-BEng in School of Instrument Science and Engineering
+\cventry
+  {Southeast University}
+  {Nanjing, China}
+  {B.Eng. in Measurement and Control Technology and Instrument}
+  {Sep. 2019--Jun. 2023}
 \begin{itemize}
-    \item \textbf{GPA}: 3.8/4.0
-    \item \textbf{Coursework}: Computer Organization and Architecture, Linear Algebra, Sensing Technology, Modern Control Engineering
-\end{itemize}
-\section*{Publications}
-\hrule
-\vspace{0.5em}
-\textbf{Cross-Domain Interest Representation Learning for Scenario- and
-Task-Aware Recommendation} \hfill Nov 2025\\ SIGIR 2026 \\
-\underline{Bokai Lin}, Naijun Gao, Yucen Gao, Cheng Hu, Zhinan Zhang, Xiaofeng Gao, Guihai Chen \\
-\begin{itemize}
-    \item \textbf{Background:} Existing industrial recommendation systems insufficiently model transferable user interests across domains, scenarios, and tasks, and often fail to effectively align multimodal and ID-based features.
-    \item \textbf{Methods:} We propose STAR-CDR, which introduces a CDI Extractor, CDI Injector, and CDI Multimodal Adapter to improve cross-domain sequential modeling, adaptive expert routing, and multimodal alignment.
-    \item \textbf{Empirical Results:} STAR-CDR achieves +0.35 average AUC improvement over the strongest baseline offline, and yields consistent online KPI gains of +3.17\% to +9.24\% in production A/B testing.
+  \item GPA: 3.8/4.0.
 \end{itemize}
 
-\noindent \textbf{ChronoFlow-Policy: Unifying Past-Current-Future Interaction Flow in Visuomotor Policy Learning} \hfill Mar 2026\\ Under Review in ECCV 2026 \\
-\underline{Bokai Lin*}, Yifu Xu*, Xinyu Zhan, Hongjie Fang, JIALIN TIAN, Fu-Cheng Zhang, Yong-Lu Li, Cewu Lu, Lixin Yang \\
+\cvsection{Publications}
+
+{\footnotesize\color{SIIMuted}
+\textsuperscript{*} Equal contribution.
+\textsuperscript{\(\dagger\)} Corresponding author.}
+\vspace{0.32em}
+
+\cvpublication
+  {1}
+  {LaMP: Learning Vision-Language-Action Policy with 3D Scene Flow as Latent Motion Prior}
+  {\textbf{Xinkai Wang}, Chenyi Wang, Yifu Xu, Mingzhe Ye, Fucheng Zhang,
+   Jialin Tian, Xinyu Zhan, Lifeng Zhu, Cewu Lu, Lixin Yang\textsuperscript{\(\dagger\)}}
+  {ECCV 2026}
+  {\cvlink{https://summerwxk.github.io/lamp-project-page/}{Website}
+   \enspace
+   \cvlink{https://arxiv.org/abs/2603.25399}{Paper}
+   \enspace
+   \cvlink{https://github.com/SummerWXK/LaMP}{Code}}
+
+\cvpublication
+  {2}
+  {Synergizing Understanding and Generation with Interleaved Analyzing-Drafting Thinking}
+  {Shengqiong Wu, Bobo Li, \textbf{Xinkai Wang}, Xiangtai Li, Lei Cui,
+   Furu Wei, Shuicheng Yan, Hao Fei\textsuperscript{\(\dagger\)}, Tat-Seng Chua}
+  {ICLR 2026}
+  {\cvlink{https://sqwu.top/AD-Loop/}{Website}
+   \enspace
+   \cvlink{https://www.microsoft.com/en-us/research/publication/synergizing-understanding-and-generation-with-interleaved-analyzing-drafting-thinking/}{Paper}}
+
+\cvpublication
+  {3}
+  {Interaction as Intelligence: Deep Research With Human-AI Partnership}
+  {Lyumanshan Ye, Xiaojie Cai, \textbf{Xinkai Wang}, Junfei Wang,
+   Xiangkun Hu, Jiadi Su, Yang Nan, Sihan Wang, Bohan Zhang, Xiaoze Fan,
+   Jinbin Luo, Yuxiang Zheng, Tianze Xu, Dayuan Fu, Yunze Wu, Pengrui Lu,
+   Zengzhi Wang, Yiwei Qin, Zhen Huang, Yan Ma, Zhulin Hu, Haoyang Zou,
+   Tiantian Mi, Yixin Ye, Ethan Chern, Pengfei Liu\textsuperscript{\(\dagger\)}}
+  {arXiv 2025}
+  {\cvlink{https://opensii.ai/}{Website}
+   \enspace
+   \cvlink{https://arxiv.org/abs/2507.15759}{Paper}}
+
+\cvpublication
+  {4}
+  {Impact of Target and Tool Visualization on Depth Perception and Usability in Optical See-Through AR}
+  {Yue Yang\textsuperscript{*}, Xue Xie\textsuperscript{*},
+   \textbf{Xinkai Wang}, Hui Zhang, Chiming Yu, Xiaoxian Xiong, Lifeng Zhu,
+   Yuanyi Zheng, Jue Cen\textsuperscript{\(\dagger\)}, Bruce Daniel,
+   Fred Baik\textsuperscript{\(\dagger\)}}
+  {IEEE ISMAR 2025 \textbullet\ Honorable Mention -- Best Poster Award}
+  {\cvlink{https://arxiv.org/abs/2508.18481}{Paper}}
+
+\newpage
+\cvsection{Publications (continued)}
+
+\cvpublication
+  {5}
+  {MRUCT: Mixed Reality Assistance for Acupuncture Guided by Ultrasonic Computed Tomography}
+  {\textbf{Xinkai Wang}\textsuperscript{*}, Yue Yang\textsuperscript{*},
+   Kehong Zhou, Xue Xie, Lifeng Zhu\textsuperscript{\(\dagger\)},
+   Aiguo Song, Bruce Daniel}
+  {IEEE VR 2025 \textbullet\ Oral Presentation}
+  {\cvlink{https://ieeexplore.ieee.org/document/10937474}{Paper}}
+
+\cvpublication
+  {6}
+  {DipMe: Haptic Recognition of Granular Media for Tangible Interactive Applications}
+  {\textbf{Xinkai Wang}, Shuo Zhang, Ziyi Zhao,
+   Lifeng Zhu\textsuperscript{\(\dagger\)}, Aiguo Song}
+  {arXiv 2024}
+  {\cvlink{https://arxiv.org/abs/2411.08641}{Paper}}
+
+\cvsection{Research Experience}
+
+\cvorg
+  {Shanghai Innovation Institute}
+  {Shanghai, China}
+\cvrole
+  {Ph.D. Research}
+  {Sep. 2025--Present}
 \begin{itemize}
-    \item \textbf{Background:} Effective visuomotor policy learning requires understanding not only the current interaction state, but also how objects and manipulators have evolved from the past and may change in the future. Existing methods typically model historical context or future dynamics in isolation, lacking a unified temporal representation of interaction dynamics.
-    \item \textbf{Methods:} We propose ChronoFlow, a temporally unified representation that captures past, current, and future interaction dynamics through sparse 3D keypoints of both objects and the gripper. Based on this representation, we introduce ChronoFlow-Policy, a diffusion-based visuomotor policy that jointly learns ChronoFlow and action sequences through a co-training objective, enabling temporally coherent reasoning over object motion and gripper interaction.
-    \item \textbf{Empirical Results:} Experiments on 14 simulated tasks and 5 real-world manipulation tasks show that ChronoFlow-Policy consistently outperforms strong diffusion-policy baselines, with improved robustness in long-horizon and non-Markovian manipulation scenarios.
+  \item Develop Vision-Language-Action policies and video world models,
+    focusing on 3D motion priors for visuomotor learning; advised by
+    \href{https://lixiny.github.io/}{Prof. Lixin Yang} and
+    \href{https://www.mvig.org/}{Prof. Cewu Lu}.
 \end{itemize}
 
-\vspace{0.5em}
-
-\noindent\textbf{LIDEA: Human-to-Robot Imitation Learning via Implicit Feature Distillation and Explicit Geometry Alignment} \hfill Mar 2026\\ Under Review in IROS 2026 \\
-Yifu Xu*, \underline{Bokai Lin*}, Xinyu Zhan, Hongjie Fang, Yong-Lu Li, Cewu Lu, Lixin Yang \\
+\cvrole
+  {Visiting Student}
+  {Mar. 2025--Aug. 2025}
 \begin{itemize}
-    \item \textbf{Background:} Robot learning is limited by the scarcity and cost of robotic demonstrations, while human videos provide abundant interaction data. However, transferring policies from human hands to robot grippers is challenging due to discrepancies in appearance, geometry, and action semantics.
-    \item \textbf{Methods:} We propose LIDEA, a human2robot imitation learning framework that combines implicit 2D feature distillation with explicit 3D geometry alignment to bridge embodiment gap between human hands and robot grippers.
-    \item \textbf{Empirical Results:} LIDEA enables robust cross-embodiment transfer from human videos to robot policies, replacing up to 80\% of robot demonstrations and improving out-of-distribution generalization.
+  \item Studied Embodied AI and Vision-Language-Action models under the
+    supervision of Prof. Lixin Yang and Prof. Cewu Lu.
 \end{itemize}
 
-\noindent\textbf{MatryoshkaKV: Adaptive KV Compression via Trainable Orthogonal Projection} \hfill Oct 2024\\
-ICLR 2025 \\
-\underline{Bokai Lin}, Zihao Zeng, Zipeng Xiao, Siqi Kou, TianQi Hou, Xiaofeng Gao, Hao Zhang, Zhijie Deng \\
-\url{https://arxiv.org/abs/2410.14731}
+\cvorg
+  {Jiangsu Key Laboratory of Robot Perception and Control Technology}
+  {Nanjing, China}
+\cvrole
+  {Medical Robotics and Human--Computer Interaction Research}
+  {Jun. 2023--Feb. 2025}
 \begin{itemize}
-    \item \textbf{Background:} As the size of the LLM grows, the KV cache becomes a bottleneck within the system in both storage and memory transfer. Previous studies on KV cache compression mainly focus on token merging and eviction, leaving compression on the feature dimension axis less explored.
-    \item \textbf{Methods:} We focus on the feature dimension axis, by utilizing low-rank projection matrices to transform the cache features into spaces with reduced dimensions. We propose to tune the orthogonal projection matrix on the continual pre-training or supervised fine-tuning datasets with an elaborate Matryoshka learning strategy.
-    \item \textbf{Empirical Results:} Our MatryoshkaKV achieves a 60\% KV cache compression rate while maintaining 90\% performance. By combining token merging and eviction methods, we observed an increase in the perplexity of only about 1 on texts longer than 2k tokens, using just 10\% of the KV cache.
+  \item Developed medical XR, robot-assisted intervention, and haptic systems,
+    contributing to MRUCT, VISTA, and DipMe.
+  \item Supervised by Prof. Lifeng Zhu and Prof. Aiguo Song.
 \end{itemize}
 
-\vspace{0.5em}
+\cvsection{Honors \& Awards}
 
-\noindent\textbf{In-context KV-Cache Eviction for LLMs via Attention-Gate}  \hfill Oct 2024 \\
-arXiv preprint arXiv:2410.12876 \\
-Zihao Zeng, \underline{Bokai Lin}, TianQi Hou, Hao Zhang, Zhijie Deng \\
-\url{https://arxiv.org/abs/2410.12876}
-\begin{itemize}
-    \item \textbf{Background:} KV-Cache is essential for LLM inference but can bottleneck with large models and long contexts. Static eviction lacks flexibility, while dynamic methods like H2O face attention bias.
-    \item \textbf{Methods:} We propose Attention-Gate, a parameterized eviction mechanism that uses context to generate token eviction flags. Easily integrated into LLMs, it’s tuned via continual pre-training or fine-tuning with minimal overhead.
-    \item \textbf{Empirical Results:} Our approach increases accuracy and evicts more tokens efficiently. In supervised fine-tuning, it outperforms LoRA-finetuned LLMs, enhancing accuracy by 13.9\% on datasets like RTE while evicting 62.8\% of tokens.
-\end{itemize}
+\cvaward
+  {Oct. 2025}
+  {3rd Place, IROS 2025 Challenge of Multimodal Robot Learning in InternUtopia and Real World}
+  {Vision-Language Manipulation in Open Tabletop Environments
+   \textbullet\ Team Leader, RoboSoul.}
 
-\vspace{0.5em}
+\cvaward
+  {2024--2025}
+  {Graduate National Scholarship}
+  {}
 
-\noindent\textbf{Improved Operator Learning by Orthogonal Attention} \hfill July 2024\\
-ICML 2024 Spotlight \\
-Zipeng Xiao, Zhongkai Hao, \underline{Bokai Lin}, Zhijie Deng, Hang Su \\
-\url{https://arxiv.org/pdf/2310.12487}
-\begin{itemize}
-    \item \textbf{Background:} Neural operators typically depend on computationally intensive PDE solvers for training data and often suffer from performance issues with limited data.
-    \item \textbf{Methods:} We found that the kernel integral operator in PDE solvers can be reformulated using orthonormal eigenfunctions, similar to attention mechanisms but without softmax. Using this insight, we developed an orthogonal attention module to create the Orthogonal Neural Operator (ONO).
-    \item \textbf{Empirical Results:} Through extensive testing on six challenging operator learning benchmarks, ONO demonstrated impressive performance: reducing prediction errors by up to 30\% compared to other methods and achieving an 80\% decrease in test error for zero-shot super-resolution.
-\end{itemize}
+\cvaward
+  {2023--2025}
+  {First-Class Graduate Academic Scholarship, Southeast University}
+  {Received for two consecutive academic years.}
 
-\vspace{0.5em}
+\cvaward
+  {Jul. 2024}
+  {Team First Prize, Technical Competition, East China Division, 19th China Graduate Electronics Design Contest}
+  {}
 
-% \noindent\textbf{Amortized Fourier Neural Operators} \hfill Sept 2024 \\
-% NeurIPS 2024 \\
-% Zipeng Xiao, Siqi Kou, Zhongkai Hao, \underline{Bokai Lin}, Zhijie Deng
-% \begin{itemize}
-%     \item \textbf{Background:} Fourier Neural Operators (FNOs) are effective for solving PDEs but become inefficient in high-dimensional cases due to the need for numerous parameters across different frequency modes.
-%     \item \textbf{Methods:} We introduce the AMortized Fourier Neural Operator (AM-FNO), which maintains a fixed number of parameters regardless of frequency modes. This is implemented using Kolmogorov–Arnold Networks (KAN) and MLPs with orthogonal embeddings.
-%     \item \textbf{Empirical Results:} Our approach reduces relative error by 25\% to 35\% across six standard PDE benchmarks. AM-FNO also excels in zero-shot super-resolution tasks, achieving lower errors than FNO at test resolutions, highlighting its potential to cut data collection and training costs for high-resolution PDE problems.
-% \end{itemize}
+\cvaward
+  {Dec. 2023}
+  {Grand Prize (Top 5\%), Main Competition, 18th ``Challenge Cup'' National College Students' Extracurricular Academic and Technological Works Competition}
+  {}
 
+\cvsection{Academic Service}
 
-\section*{Experience}
-\hrule
-\vspace{0.5em}
+\cvtworow
+  {\sffamily\small\bfseries\color{SIIPrimary} Conference Reviewer}
+  {\small ECCV, ICRA, IROS, IEEE VR, and CHI.}
+\vspace{0.10em}
+\cvtworow
+  {\sffamily\small\bfseries\color{SIIPrimary} Journal Reviewer}
+  {\small IEEE Robotics and Automation Letters (RA-L).}
 
-\textbf{Shanghai Innovation Institute} \hfill Mar. 2025 -- Now 
-\begin{itemize}
-    \item \textbf{Supervisors:} \href{https://lixiny.github.io/}{Lixin Yang}, \href{https://www.mvig.org/}{Cewu Lu}
-    \item \textbf{Embodied AI}: Research on integrating 3D motion prior into Visuomotor Policies and World Action Models, as well as Ego-centric data and UMI data utilization.
-\end{itemize}
-
-\vspace{0.5em}
-
-\noindent\textbf{Jiangsu Key Laboratory of Robot Perception and Control Technology} \hfill Jun. 2023 -- Feb. 2025 
-\begin{itemize}
-    \item \textbf{Supervisors:} Lifeng Zhu, Aiguo Song
-    \item \textbf{Medical Robot}: Distill LLM-related knowledge into the embedding layer of ID-based recommender systems to effectively address the cold-start problem for items with limited user interactions.
-    \item \textbf{Computer Human Interaction}: Search for the midpoint of the optimal route and simultaneously use parallel decoding to improve route generation efficiency.
-\end{itemize}
-
-% \vspace{0.5em}
-
-% \noindent\textbf{Interactive Media Business Unit, Huawei Consumer Cloud Service} \hfill Sept 2024 -- Now 
-% \begin{itemize}
-%     \item \textbf{Multi-Domain Recommendation}: Utilize user information from different apps to enrich user representations.
-%     \item \textbf{Multi-Modal Recommendation}: Align the user-item embedding of ID-based recommender systems with that of Multi-Modal recommender systems.
-% \end{itemize}
-
-% \vspace{0.5em}
-
-% \noindent\textbf{Qingyuan Research Institute} \hfill June 2023 -- Sept 2024
-% \begin{itemize}
-%     \item \textbf{Supervisor:} Zhijie Deng
-%     \item \textbf{Efficient AIGC}: Optimize AIGC inference by innovating KV cache compression techniques and unifying LLMs/VLMs, focusing on reducing memory footprint and accelerating inference speed.
-%     \item \textbf{Neural Operator:} Advance NO technology to improve accuracy and efficiency in solving PDE problems.
-% \end{itemize}
-
-% \section*{Technical Skills}
-% \hrule
-% \vspace{0.5em}
-% \begin{itemize}
-%     \item \textbf{Languages:} C++, C, Python, \LaTeX
-%     \item \textbf{Framework:} Pytorch, TensorFlow
-% \end{itemize}
-
-\section*{Academic Service}
-\hrule
-\vspace{0.5em}
-\begin{itemize}
-    \item \textbf{External Reviewer:} ECCV, ICRA, IROS, IEEE VR, CHI
-\end{itemize}
-\normalsize
 \end{document}
