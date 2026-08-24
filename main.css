@@ -626,6 +626,7 @@ hr.soft {
 .social-icon {
     width: 40px;
     height: 40px;
+    object-fit: contain;
     display: inline-block
 }
 
