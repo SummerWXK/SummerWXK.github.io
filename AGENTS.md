@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository is a static GitHub Pages personal website. The main page lives in `index.html`, with global styles in `main.css` and `stylesheet.css`. Additional CSS and legacy Bootstrap files are under `css/` and `format/`. Blog pages live in `blogs/`, with article-specific images in `blogs/lingbot_video_assets/`. Site images, logos, and certificates are in `images/`; publication PDFs and citation text files are in `work/`. Search and crawler files such as `robots.txt`, `sitemap.xml`, and verification HTML/XML files stay at the repository root.
+This repository is a static GitHub Pages personal website. The main page lives in `index.html`, with global styles in `main.css` and `stylesheet.css`. Additional CSS and legacy Bootstrap files are under `css/` and `format/`. Blog pages live in `blogs/`, with article-specific images in `blogs/lingbot_video_assets/`. Site images, logos, and certificates are in `images/`; self-hosted web fonts (woff2) are in `fonts/`; publication PDFs and citation text files are in `work/`. Search and crawler files such as `robots.txt`, `sitemap.xml`, and verification HTML/XML files stay at the repository root.
 
 ## Build, Test, and Development Commands
 
