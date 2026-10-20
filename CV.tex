@@ -25,17 +25,17 @@
 
 % Blue palette sampled from Shanghai Innovation Institute's public website
 % assets. The seal is used once as a restrained affiliation marker.
+% Navy is reserved for headings; the single accent blue marks venues and links.
 \definecolor{SIIPrimary}{HTML}{113E98}
-\definecolor{SIILink}{HTML}{004BB9}
-\definecolor{SIIAccent}{HTML}{1267E3}
+\definecolor{SIIAccent}{HTML}{004BB9}
 \definecolor{SIIPale}{HTML}{F4F8FF}
 \definecolor{SIIInk}{HTML}{1F2937}
-\definecolor{SIIMuted}{HTML}{7A8BA2}
-\definecolor{SIIRule}{HTML}{D5DDE8}
+\definecolor{SIIMuted}{HTML}{5E6E85}
+\definecolor{SIIRule}{HTML}{CBD5E1}
 
 \hypersetup{
   colorlinks=true,
-  urlcolor=SIILink,
+  urlcolor=SIIAccent,
   linkcolor=SIIPrimary,
   pdfauthor={Xinkai Wang},
   pdftitle={Curriculum Vitae - Xinkai Wang},
@@ -57,22 +57,28 @@
   itemsep=0.08em,
   topsep=0.16em,
   parsep=0pt,
-  partopsep=0pt
+  partopsep=0pt,
+  before=\small
 }
-\renewcommand{\labelitemi}{\textcolor{SIIAccent}{\small\textbullet}}
+\renewcommand{\labelitemi}{\textcolor{SIIMuted}{\small\textbullet}}
 
 \pagestyle{fancy}
 \fancyhf{}
 \fancyfoot[L]{\sffamily\footnotesize\color{SIIMuted} Xinkai Wang \textbar\ Curriculum Vitae}
-\fancyfoot[R]{\sffamily\footnotesize\bfseries\color{SIIPrimary} \thepage}
+\fancyfoot[R]{\sffamily\footnotesize\color{SIIMuted} \thepage\ / \pageref*{cv:lastpage}}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
+
+\AtEndDocument{\label{cv:lastpage}}
 
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \newcommand{\cvlink}[2]{%
-  \href{#1}{\sffamily\footnotesize\bfseries\color{SIILink} #2}%
+  \href{#1}{\sffamily\mdseries\footnotesize\color{SIIAccent} #2}%
 }
+
+% Linked publication title that keeps the body ink colour.
+\newcommand{\cvtitle}[2]{\href{#1}{\color{SIIInk}#2}}
 
 \newcommand{\cvheader}{%
   \begingroup
@@ -98,15 +104,12 @@
           \href{mailto:xinkaiwang@sii.edu.cn}{xinkaiwang@sii.edu.cn}
           \enspace\textcolor{SIIRule}{\textbar}\enspace
           +86 155 2321 3758\par
-          \vspace{1.5pt}
+          \vspace{2.5pt}
           \cvlink{https://summerwxk.github.io/}{Homepage}
           \enspace\textcolor{SIIRule}{\textbar}\enspace
           \cvlink{https://scholar.google.com/citations?user=SdTlC6QAAAAJ\&hl=en}{Scholar}
           \enspace\textcolor{SIIRule}{\textbar}\enspace
-          \cvlink{https://github.com/SummerWXK}{GitHub}\par
-          \vspace{1.5pt}
-          {\scriptsize\color{SIIMuted}
-           No. 3, Lane 699, Huafa Road, Xuhui District, Shanghai, China}
+          \cvlink{https://github.com/SummerWXK}{GitHub}
         \end{minipage}
       \end{tabularx}%
     }%
@@ -116,33 +119,35 @@
 }
 
 \newcommand{\cvsection}[1]{%
-  \par\vspace{0.64em}%
+  \par\vspace{1.15em}%
   {\sffamily\large\bfseries\color{SIIPrimary} #1}\par\nobreak
-  \vspace{0.10em}%
-  \noindent{\color{SIIAccent}\rule{14mm}{1.05pt}}%
-  {\color{SIIRule}\rule{\dimexpr\linewidth-14mm\relax}{0.55pt}}\par\nobreak
-  \vspace{0.32em}%
+  \vspace{-0.35em}%
+  \noindent{\color{SIIRule}\rule{\linewidth}{0.6pt}}\par\nobreak
+  \vspace{0.30em}%
 }
 
+% \leavevmode stops a leading \color from pushing a p-column cell down a line.
 \newcommand{\cventry}[4]{%
+  \par\addvspace{0.55em}%
   \begin{tabularx}{\linewidth}{@{}Y>{\raggedleft\arraybackslash}p{0.27\linewidth}@{}}
-    {\sffamily\bfseries #1} & {\sffamily\footnotesize\color{SIIMuted} #2} \\
-    {\small\itshape #3} & {\sffamily\footnotesize\bfseries\color{SIIAccent} #4}
+    {\sffamily\bfseries #1} & \leavevmode{\sffamily\footnotesize\color{SIIMuted} #2} \\
+    {\small\itshape #3} & \leavevmode{\sffamily\footnotesize\color{SIIInk} #4}
   \end{tabularx}\par
   \vspace{0.08em}%
 }
 
 \newcommand{\cvorg}[2]{%
+  \par\addvspace{0.55em}%
   \begin{tabularx}{\linewidth}{@{}Y>{\raggedleft\arraybackslash}p{0.25\linewidth}@{}}
     {\sffamily\bfseries #1} &
-    {\sffamily\footnotesize\color{SIIMuted} #2}
+    \leavevmode{\sffamily\footnotesize\color{SIIMuted} #2}
   \end{tabularx}\par
 }
 
 \newcommand{\cvrole}[2]{%
   \begin{tabularx}{\linewidth}{@{}Y>{\raggedleft\arraybackslash}p{0.27\linewidth}@{}}
     {\small\itshape #1} &
-    {\sffamily\footnotesize\bfseries\color{SIIAccent} #2}
+    \leavevmode{\sffamily\footnotesize\color{SIIInk} #2}
   \end{tabularx}\par
 }
 
@@ -158,7 +163,7 @@
 \newcommand{\cvinterestrow}[2]{%
   \noindent
   \parbox[t]{0.12\linewidth}{%
-    \vspace{0pt}\raggedright\sffamily\small\bfseries\color{SIIPrimary} #1%
+    \vspace{0pt}\raggedright\sffamily\small\bfseries #1%
   }%
   \hspace{0.5em}%
   \parbox[t]{\dimexpr0.88\linewidth-0.5em\relax}{%
@@ -169,7 +174,7 @@
 \newcommand{\cvpublication}[5]{%
   \noindent
   \makebox[2.05em][l]{%
-    \sffamily\small\bfseries\color{SIIAccent}[#1]%
+    \sffamily\small\color{SIIMuted}[#1]%
   }%
   \parbox[t]{\dimexpr\linewidth-2.05em\relax}{%
     \raggedright
@@ -182,17 +187,20 @@
        \enspace\textcolor{SIIRule}{\textbar}\enspace #5%
      }}%
   }\par
-  \vspace{0.36em}%
+  \vspace{0.62em}%
 }
 
+% Preprints are muted so peer-reviewed venues stand out.
+\newcommand{\cvpreprint}[1]{\textcolor{SIIMuted}{#1}}
+
 \newcommand{\cvaward}[3]{%
-  \cvtworow
-    {\sffamily\small\bfseries\color{SIIAccent} #1}
-    {{\small\bfseries #2}\par
-     \ifstrempty{#3}{}{%
-       \vspace{0.08em}{\small\color{SIIMuted} #3}\par
-     }}%
-  \vspace{0.16em}%
+  \begin{tabularx}{\linewidth}{@{}Y>{\raggedleft\arraybackslash}p{0.14\linewidth}@{}}
+    {\small\bfseries #2} & \leavevmode{\sffamily\footnotesize\color{SIIInk} #1}
+  \end{tabularx}\par
+  \ifstrempty{#3}{}{%
+    {\small\color{SIIMuted} #3}\par
+  }%
+  \vspace{0.30em}%
 }
 
 \begin{document}
@@ -217,7 +225,7 @@
   {Shanghai Innovation Institute}
   {Shanghai, China}
   {Ph.D. Candidate in Instrument Science and Engineering}
-  {Mar. 2025--Present}
+  {Sep. 2025--Present}
 \begin{itemize}
   \item Joint Ph.D. training with Southeast University.
   \item Primary advisors:
@@ -255,43 +263,41 @@
 
 \cvpublication
   {1}
-  {Can World and Action Modeling Benefit Each Other under Unified Causal Training?}
+  {\cvtitle{https://selen-suyue.github.io/OneWMNet}{Can World and Action Modeling Benefit Each Other under Unified Causal Training?}}
   {Yue Su\textsuperscript{*}, Bokai Lin\textsuperscript{*},
    \textbf{Xinkai Wang}\textsuperscript{*}, Chubin Zhang, Xiangnan Wu,
    Kuan Zhang, Weiyang Jin, Jiwen Yu, Yiming Li, Cewu Lu,
    Lixin Yang\textsuperscript{\(\dagger\)}, Xihui Liu\textsuperscript{\(\dagger\)}}
-  {arXiv 2026}
+  {\cvpreprint{arXiv 2026}}
   {\cvlink{https://selen-suyue.github.io/OneWMNet}{Website}
    \enspace
    \cvlink{https://arxiv.org/abs/2610.21095}{Paper}}
 
 \cvpublication
   {2}
-  {ForceWAM: Decoupling Future and Response Learning from Demo and Play Data for Contact-Rich Manipulation}
+  {\cvtitle{https://force-wam.github.io/}{ForceWAM: Decoupling Future and Response Learning from Demo and Play Data for Contact-Rich Manipulation}}
   {Zijun Xu\textsuperscript{*}, Wendi Chen\textsuperscript{*},
    \textbf{Xinkai Wang}\textsuperscript{*}, Jiachen Zou, Hongjin Chen,
-   Hairuo Liu, Bokai Lin, Shihao Ma, Ke Ma, Zhiwei Zhang, Zhuohao Yan, Ke Wu,
-   Haoming Song, Xueqi Li, Chuan Wen, Jieru Zhao, Wenchao Ding, Cewu Lu,
-   Lixin Yang\textsuperscript{\(\dagger\)}}
-  {arXiv 2026}
+   \ldots, Cewu Lu, Lixin Yang\textsuperscript{\(\dagger\)}}
+  {\cvpreprint{arXiv 2026}}
   {\cvlink{https://force-wam.github.io/}{Website}
    \enspace
    \cvlink{https://arxiv.org/abs/2610.18852}{Paper}}
 
 \cvpublication
   {3}
-  {Track4Action: Distilling World-Centric 3D Tracker into Vision-Language-Action Policies}
+  {\cvtitle{https://wing0night.github.io/track4action-project-page/}{Track4Action: Distilling World-Centric 3D Tracker into Vision-Language-Action Policies}}
   {Chenyi Wang\textsuperscript{*}, \textbf{Xinkai Wang}\textsuperscript{*},
    Bokai Lin, Jialin Tian, Fucheng Zhang, Cewu Lu,
    Lixin Yang\textsuperscript{\(\dagger\)}}
-  {arXiv 2026}
+  {\cvpreprint{arXiv 2026}}
   {\cvlink{https://wing0night.github.io/track4action-project-page/}{Website}
    \enspace
    \cvlink{https://arxiv.org/abs/2608.03727}{Paper}}
 
 \cvpublication
   {4}
-  {LaMP: Learning Vision-Language-Action Policy with 3D Scene Flow as Latent Motion Prior}
+  {\cvtitle{https://summerwxk.github.io/lamp-project-page/}{LaMP: Learning Vision-Language-Action Policy with 3D Scene Flow as Latent Motion Prior}}
   {\textbf{Xinkai Wang}, Chenyi Wang, Yifu Xu, Mingzhe Ye, Fucheng Zhang,
    Jialin Tian, Xinyu Zhan, Lifeng Zhu, Cewu Lu, Lixin Yang\textsuperscript{\(\dagger\)}}
   {ECCV 2026}
@@ -303,7 +309,7 @@
 
 \cvpublication
   {5}
-  {Synergizing Understanding and Generation with Interleaved Analyzing-Drafting Thinking}
+  {\cvtitle{https://sqwu.top/AD-Loop/}{Synergizing Understanding and Generation with Interleaved Analyzing-Drafting Thinking}}
   {Shengqiong Wu, Bobo Li, \textbf{Xinkai Wang}, Xiangtai Li, Lei Cui,
    Furu Wei, Shuicheng Yan, Hao Fei\textsuperscript{\(\dagger\)}, Tat-Seng Chua}
   {ICLR 2026}
@@ -313,23 +319,17 @@
 
 \cvpublication
   {6}
-  {Interaction as Intelligence: Deep Research With Human-AI Partnership}
+  {\cvtitle{https://arxiv.org/abs/2507.15759}{Interaction as Intelligence: Deep Research With Human-AI Partnership}}
   {Lyumanshan Ye, Xiaojie Cai, \textbf{Xinkai Wang}, Junfei Wang,
-   Xiangkun Hu, Jiadi Su, Yang Nan, Sihan Wang, Bohan Zhang, Xiaoze Fan,
-   Jinbin Luo, Yuxiang Zheng, Tianze Xu, Dayuan Fu, Yunze Wu, Pengrui Lu,
-   Zengzhi Wang, Yiwei Qin, Zhen Huang, Yan Ma, Zhulin Hu, Haoyang Zou,
-   Tiantian Mi, Yixin Ye, Ethan Chern, Pengfei Liu\textsuperscript{\(\dagger\)}}
-  {arXiv 2025}
+   Xiangkun Hu, \ldots, Ethan Chern, Pengfei Liu\textsuperscript{\(\dagger\)}}
+  {\cvpreprint{arXiv 2025}}
   {\cvlink{https://opensii.ai/}{Website}
    \enspace
    \cvlink{https://arxiv.org/abs/2507.15759}{Paper}}
 
-\newpage
-\cvsection{Publications (continued)}
-
 \cvpublication
   {7}
-  {Impact of Target and Tool Visualization on Depth Perception and Usability in Optical See-Through AR}
+  {\cvtitle{https://arxiv.org/abs/2508.18481}{Impact of Target and Tool Visualization on Depth Perception and Usability in Optical See-Through AR}}
   {Yue Yang\textsuperscript{*}, Xue Xie\textsuperscript{*},
    \textbf{Xinkai Wang}, Hui Zhang, Chiming Yu, Xiaoxian Xiong, Lifeng Zhu,
    Yuanyi Zheng, Jue Cen\textsuperscript{\(\dagger\)}, Bruce Daniel,
@@ -337,9 +337,12 @@
   {IEEE ISMAR 2025 \textbullet\ Honorable Mention -- Best Poster Award}
   {\cvlink{https://arxiv.org/abs/2508.18481}{Paper}}
 
+\newpage
+\cvsection{Publications (continued)}
+
 \cvpublication
   {8}
-  {MRUCT: Mixed Reality Assistance for Acupuncture Guided by Ultrasonic Computed Tomography}
+  {\cvtitle{https://ieeexplore.ieee.org/document/10937474}{MRUCT: Mixed Reality Assistance for Acupuncture Guided by Ultrasonic Computed Tomography}}
   {\textbf{Xinkai Wang}\textsuperscript{*}, Yue Yang\textsuperscript{*},
    Kehong Zhou, Xue Xie, Lifeng Zhu\textsuperscript{\(\dagger\)},
    Aiguo Song, Bruce Daniel}
@@ -348,10 +351,10 @@
 
 \cvpublication
   {9}
-  {DipMe: Haptic Recognition of Granular Media for Tangible Interactive Applications}
+  {\cvtitle{https://arxiv.org/abs/2411.08641}{DipMe: Haptic Recognition of Granular Media for Tangible Interactive Applications}}
   {\textbf{Xinkai Wang}, Shuo Zhang, Ziyi Zhao,
    Lifeng Zhu\textsuperscript{\(\dagger\)}, Aiguo Song}
-  {arXiv 2024}
+  {\cvpreprint{arXiv 2024}}
   {\cvlink{https://arxiv.org/abs/2411.08641}{Paper}}
 
 \cvsection{Research Experience}
@@ -420,11 +423,11 @@
 \cvsection{Academic Service}
 
 \cvtworow
-  {\sffamily\small\bfseries\color{SIIPrimary} Conference Reviewer}
-  {\small ECCV, ICRA, IROS, IEEE VR, and CHI.}
+  {\sffamily\small\bfseries Conference Reviewer}
+  {\small ICLR, AAAI, ECCV, ICRA, IROS, IEEE VR, and CHI.}
 \vspace{0.10em}
 \cvtworow
-  {\sffamily\small\bfseries\color{SIIPrimary} Journal Reviewer}
+  {\sffamily\small\bfseries Journal Reviewer}
   {\small IEEE Robotics and Automation Letters (RA-L).}
 
 \end{document}
